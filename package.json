@@ -1,0 +1,24 @@
+{
+  "name": "smartthings-edge-lanserver",
+  "version": "1.0.0",
+  "description": "Server to wrap lan connected devices for SmartThings",
+  "main": "lanserver.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davidcreager/smartthings-edge-lanserver.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/davidcreager/smartthings-edge-lanserver/issues"
+  },
+  "homepage": "https://github.com/davidcreager/smartthings-edge-lanserver#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mdns-server": "^1.0.10",
+    "node-ssdp": "^4.0.1"
+  }
+}
