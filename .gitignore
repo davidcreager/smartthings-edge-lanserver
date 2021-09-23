@@ -1,4 +1,8 @@
+jar.json
+uuid.json
 node_modules
+saves
+work
 build
 npm-debug.log
 .nyc

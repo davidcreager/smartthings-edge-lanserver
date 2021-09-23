@@ -3,8 +3,8 @@ const node-ssdp = require('node-ssdp').Server;
 const app = express();
 
 const querystring = require('querystring');
-var URL = require('url');
-var IP = require("ip")
+const URL = require('url');
+const IP = require("ip")
 
 const G_serverPort = 3300;
 app.listen(G_serverPort, "0.0.0.0", () => {

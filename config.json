@@ -1,0 +1,22 @@
+{
+  "config": {
+    "serverPort": 13030,
+    "serverPath": "/command",
+	"serverQuery": "/query",
+    "ssdpConfig": {
+      "UDN": "smartLanDevices",
+      "schema": "urn:schemas-upnp-org:"
+    },
+    "rfxcom": {
+      "usbPort": "/dev/ttyUSB0"
+    },
+    "bluetoothConnect": {},
+    "findIphone": {
+      "apple_id": "cf68e60fd112697fd6cbb2e5cab65d1c605c03ee809cc2a818ed971cc89ddff4|9b9b9f96379052e7f9fb2e71108cd5cb",
+      "password": "63089e71f458b1564c54693e4ae5281f|0411e69d6b8a5359f0bcaf7cb07b7543",
+      "encrypted": true,
+	  "deviceMapping": [{"uniqueName": "iPhone[iPhone 12 Pro]","friendlyName": "David's iPhone"},
+						{"uniqueName": "Rosie's Iphone[iPhone 11]", "friendlyName": "Rosie''s iPhone"}]
+    }
+  }
+}
