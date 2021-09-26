@@ -1,10 +1,10 @@
 sudo groupadd smartdev
-sudo useradd -g smartdev smartdev
-
 sudo adduser smartdev --system --no-create-home
-sudo usermod -a -G smartdev smartdev
-sudo usermod -a -G dialout smartdev
-// Copy the dbus config to /etc/dbus-1/system.d/
-//copy the service file to /etc/systemd/system/
+sudo usermod -a -G smartdev,dialout smartdev
 
-All files to  /var/opt/node
+// Copy the dbus config to /etc/dbus-1/system.d/
+// copy the service file to /etc/systemd/system/
+// All files to  /var/opt/node
+sudo chgrp -R smartdev /var/opt/node/smartthings-edge-lanserver/
+sudo systemctl start baseServer.service
+sudo systemctl enable baseServer.service

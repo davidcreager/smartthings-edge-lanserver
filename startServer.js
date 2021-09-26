@@ -9,7 +9,7 @@ let configFileName = null;
 if (process.argv.length > 2) {
 	configFileName = process.argv[2];
 } else {
-	configFileName = "config4.json"
+	configFileName = "config.json"
 }
 console.log(" argv length=" + process.argv.length + " fname=" +configFileName )
 if (!configFileName.includes(".")) configFileName = configFileName + ".json"

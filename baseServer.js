@@ -283,6 +283,9 @@ class bluetoothConnectServer extends baseSmartServer {
 		console.log("bleyees:\t received power: " + data[2] + " bright: " + data[8]);
 	}
 	async sendCommand(device, cmd, subcmd) {
+		const bleMagic = [];
+		bleMagic.length = 18;
+		bleMagic[0] = 0x43;bleMagic[1] = 0x67;bleMagic[2] = 0xde;bleMagic[3] = 0xad;bleMagic[4] = 0xbe;bleMagic[5] = 0xbf;
 		const bleCmd = [];
 		cmdlookup[cmd][0].forEach( (val,ind) => bleCmd.push(val) );
 		if (cmd=="power") bleCmd.push( ((subcmd=="off") ? 0x02 : 0x01) )
@@ -311,7 +314,8 @@ class bluetoothConnectServer extends baseSmartServer {
 				return null;
 			}
 		}
-		device.bleDevice.controlCharacteristic.writeValue(buffer,{"type":"reliable"}); //command, request, reliable
+		await device.bleDevice.controlCharacteristic.writeValue(Buffer.from(bleMagic),{"type":"reliable"}); //command, request, reliable
+		await device.bleDevice.controlCharacteristic.writeValue(Buffer.from(bleCmd),{"type":"reliable"}); //command, request, reliable
 	}
 	power( device, cmd, subcmd ) {
 		
