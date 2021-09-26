@@ -1,9 +1,36 @@
 #!/usr/bin/env bash
-groupadd smartdev
-adduser smartdev --system --no-create-home
-usermod -a -G smartdev,dialout smartdev
 
-mkdir /var/opt/node/smartthings-edge-lanserver/
+if [ $(getent group smartdev) ]; then
+  echo "smartdev group exists."
+else
+  echo "smartdev group does not exist - Creating"
+  groupadd smartdev
+fi
+
+
+if id smartdev &>/dev/null; then
+	echo "smartdev user exists"
+else
+	echo "smartdev user does not exist - Creating"
+	adduser smartdev --system --no-create-home
+	usermod -a -G smartdev,dialout smartdev
+fi
+
+if [ -d "/var/opt/node" ];  then
+	echo "/var/opt/node directory exists"
+else
+	echo "/var/opt/node does not exist - creating"
+	mkdir /var/opt/node/
+fi
+
+if [ -d "/var/opt/node/smartthings-edge-lanserver/" ]; then
+	echo "/var/opt/node/smartthings-edge-lanserver/ directory exists - Clearing"
+	rm -r /var/opt/node/smartthings-edge-lanserver/
+else
+	echo "/var/opt/node/smartthings-edge-lanserver/ does not exist - Creating"
+	mkdir /var/opt/node/smartthings-edge-lanserver/
+fi
+
 cp -r * /var/opt/node/smartthings-edge-lanserver/
 chgrp -R smartdev /var/opt/node/smartthings-edge-lanserver/
 
@@ -12,7 +39,7 @@ cp baseServer.service /etc/systemd/system/
 
 
 systemctl daemon-reload
-systemctl enable baseServer.service
+##systemctl enable baseServer.service
 
 
 
