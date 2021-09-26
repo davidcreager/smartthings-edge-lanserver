@@ -1,0 +1,16 @@
+[Unit]
+Description=node.js server to manage yeelight Bluetooth, Find Iphone and Blinds
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+ExecStart=/var/opt/node/smartthings-smartbulbs/smartbulbserver.js
+Restart=always
+RestartSec=1
+User=smartdev
+Group=smartdev
+Environment=PATH=/usr/bin:/usr/local/bin:/usr/sbin
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
