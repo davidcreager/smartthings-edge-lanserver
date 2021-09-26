@@ -1,5 +1,5 @@
 jar.json
-uuid.json
+uuid*.json
 node_modules
 saves
 work
