@@ -55,13 +55,26 @@ class serverManager {
 				}
 			})
 		}
+		this.app.get("/devices", (req, res) => {this.listDevices(req,res)});
 		this.app.get("/:device/:command", (req, res) => {this.command(req,res)});
+	}
+	listDevices(req,res) {
+		const devList = Object.keys(this.devices).map( (dev) => {
+			return {uniqueName: this.devices[dev].uniqueName, 
+						queryID: this.devices[dev].queryID, 
+						validCommands: this.devices[dev].server.validCommands,
+						location: this.devices[dev].location,
+						friendlyName: this.devices[dev].friendlyName, type: this.devices[dev].type}
+			});
+		//console.log(JSON.stringify(devList))
+		res.status(200).json(devList);
+		return
 	}
 	getDeviceInConfig(uniqueName,type) {
 		const deviceInConfig = this.config[type].deviceMapping.find((ele) => uniqueName == ele.uniqueName);
 		return deviceInConfig;		
 	}
-	addDevice(device){
+	addDevice(device, server){
 		//let USN = "uuid:" + device.id + ":" + this.config["ssdpConfig"].schema + "device:" + "smartdev:1";
 		//'ST: urn:SmartThingsCommunity:device:LightBulbESP8266:1'
 		if (!this.uuidStore[device.uniqueName]) {
@@ -73,7 +86,9 @@ class serverManager {
 			}
 		}
 		device.id = this.uuidStore[device.uniqueName];
-		device.queryID + "uuid:" + device.id + this.USNbase
+		device.queryID = "uuid:" + device.id + this.USNbase;
+		device.server = server;
+		device.location = "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID;
 		const UDN = "uuid:" + device.id;
 		this.SSDPServers[device.uniqueName] = new nodessdp({
 								allowWildcards: true, 
@@ -138,7 +153,8 @@ class serverManager {
 			res.status(200).json("Received Refresh");
 			return null
 		}
-		const server = servers[dev.type]
+		//const server = servers[dev.type]
+		const server = dev.server
 		if (!server.validCommands.includes(req.params.command)) {  
 			console.warn("[serverManager][command][error]\t Invalid Command "  + req.params.command + " for " + req.params.device);
 			res.status(500).send("invalid command");
@@ -146,8 +162,8 @@ class serverManager {
 		}
 		console.log("[baseSmartServer][command]\t Processing "  + req.params.command + " for " + req.params.device);
 		
-		server[req.params.command](dev);
-		res.json({devices: this.devices, validCommands: server.validCommands});
+		server[req.params.command](dev,req.params.command,req.query);
+		res.status(200).json({response:"suceeded", command: req.params.command, subcommand:req.query});
 		console.log("[serverManager][command]\t responded host=" + req.get("host") + 
 					" origin=" + req.get("origin") +
 					" remIP=" + req.socket.remoteAddress +
@@ -214,7 +230,7 @@ class rfxcomServer extends baseSmartServer {
 							mac: null,
 							bleDevice: null
 							};
-						this.manager.addDevice(device);
+						this.manager.addDevice(device, this);
 					}					
 				});
 			} else {
@@ -233,7 +249,6 @@ class bluetoothConnectServer extends baseSmartServer {
 		this.type = "bluetoothConnect";
 		this.validCommands = ["power", "color","temperature","level"];
 		this.managementCommands = [];
-		this.devices = {};
 		this.adapter = null;
 		this.cmdLookup = {
 			power:		[[0x43,0x40],[]],     		// 0x01 is on 0x02 off],
@@ -287,22 +302,25 @@ class bluetoothConnectServer extends baseSmartServer {
 		bleMagic.length = 18;
 		bleMagic[0] = 0x43;bleMagic[1] = 0x67;bleMagic[2] = 0xde;bleMagic[3] = 0xad;bleMagic[4] = 0xbe;bleMagic[5] = 0xbf;
 		const bleCmd = [];
-		cmdlookup[cmd][0].forEach( (val,ind) => bleCmd.push(val) );
+		this.cmdLookup[cmd][0].forEach( (val,ind) => bleCmd.push(val) );
 		if (cmd=="power") bleCmd.push( ((subcmd=="off") ? 0x02 : 0x01) )
 		if (cmd=="level") bleCmd.push(parseInt(subcmd.toString(16),16));
 		if (cmd=="color") colors[subcmd].forEach((val)=> bleCmd.push(parseInt(val.toString(16),16)))
-		cmdlookup[cmd][1].forEach( (val,ind) => bleCmd.push(val) );
+		this.cmdLookup[cmd][1].forEach( (val,ind) => bleCmd.push(val) );
 		bleCmd.length = 18
 		const self = this;
-		if ( (device.bleDevice == {}) || !(await device.bleDevice.isConnected()) ){
+		if ( (!device.bleDevice.isConnected) || !(await device.bleDevice.isConnected()) ){
 			try {
-				device.bleDevice = await this.adapter.waitDevice(device,mac,10 * 10000);
+				console.log("baseSmartServer:sendCommand: connecting to " + device.mac + " " + util.inspect(await this.adapter.devices()) )
+				//device.bleDevice = await this.adapter.waitDevice(device.device.mac,20 * 10000);
+				device.bleDevice = await this.adapter.waitDevice(device.mac);
+				console.log("baseSmartServer:sendCommand: connected to " + device.mac + " " + util.inspect(device.bleDevice) )
 				if (device.bleDevice) {
-					await device.bleDevice.conect();
-					device.bleDevice.gattServer = await device.gatt();
-					device.bleDevice.serviceRef = await gattServer.getPrimaryService(device.bleDevice.config.SERVICE_UUID);
-					device.bleDevice.controlCharacteristic = await serviceRef.getCharacteristic(device.bleDevice.config.CONTROL_UUID);
-					device.bleDevice.notifyCharacteristic = await serviceRef.getCharacteristic(device.bleDevice.config.NOTIFY_UUID);
+					await device.bleDevice.connect();
+					device.bleDevice.gattServer = await device.bleDevice.gatt();
+					device.bleDevice.serviceRef = await device.bleDevice.gattServer.getPrimaryService(device.config.SERVICE_UUID);
+					device.bleDevice.controlCharacteristic = await device.bleDevice.serviceRef.getCharacteristic(device.config.CONTROL_UUID);
+					device.bleDevice.notifyCharacteristic = await device.bleDevice.serviceRef.getCharacteristic(device.config.NOTIFY_UUID);
 					device.bleDevice.notifyCharacteristic.on("valuechanged", (data) => self.receiveNotification(device, data));
 					await device.bleDevice.notifyCharacteristic.startNotifications();
 				} else {
@@ -318,17 +336,17 @@ class bluetoothConnectServer extends baseSmartServer {
 		await device.bleDevice.controlCharacteristic.writeValue(Buffer.from(bleCmd),{"type":"reliable"}); //command, request, reliable
 	}
 	power( device, cmd, subcmd ) {
-		
-		sendCommand(device, cmd, subcmd )
+		console.log("Power command received " + cmd + util.inspect(subcmd))
+		this.sendCommand(device, cmd, subcmd.value )
 	}
 	level( device, cmd, subcmd ) {
-		sendCommand(device, cmd, subcmd )
+		this.sendCommand(device, cmd, subcmd.value )
 	}
 	temperature( device, cmd, subcmd ) {
-		sendCommand(device, cmd, subcmd )
+		this.sendCommand(device, cmd, subcmd.value )
 	}
 	color( device, cmd, subcmd ) {
-		sendCommand(device, cmd, subcmd )
+		this.sendCommand(device, cmd, subcmd.value )
 	}
 	async discover() {
 		const self = this;
@@ -364,7 +382,7 @@ class bluetoothConnectServer extends baseSmartServer {
 					type: self.type,
 					bleDevice: {}
 				}
-				self.manager.addDevice(device);
+				self.manager.addDevice(device, self);
 			}
 		}
 	}
@@ -442,7 +460,7 @@ class findIphoneServer extends baseSmartServer {
 							mac: null,
 							bleDevice: null
 							};
-						self.manager.addDevice(device);
+						self.manager.addDevice(device, self);
 					}
 				});
 			}
