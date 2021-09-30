@@ -14,6 +14,28 @@ const simpLog = function(typ,obj,newb) {
 	//				" target=" + newb + " ssdpUSNPrefix=" + ssdpUSNPrefix + " ssdpUDN=" + ssdpUDN);
 }
 
+class ssdpDevice {
+	constructor({deviceType, friendlyName, UDN, location, id, modelDescription, queryID} = {}) {
+		this.deviceType = deviceType;
+		this.friendlyName = friendlyName;
+		this.UDN = UDN;
+		this.location = location;
+		this.id = id;
+		this.manufacturer = "DHC EA Consulting";
+		this.modelName = deviceType;
+		this.modelNumber = "0001.0001";
+		this.modelDescription = modelDescription;
+		this.serialNumber = "0001001";
+		this.queryID = queryID;
+	}
+}	
+class ssdpDescription {
+	constructor(ssdpDevice) {
+		this.root = { $: {"xmlns": "urn:schemas-upnp-org:device-1-0" + " configId=" + "configuration number"} };
+		this.specVersion = {major:1,minor:0};
+		this.device = ssdpDevice;
+	}
+}
 class serverManager {
 	constructor(config) {
 		this.app = express();
@@ -55,8 +77,16 @@ class serverManager {
 				}
 			})
 		}
+		this.app.get("/discovery", (req, res) => {this.discovery(res)});
 		this.app.get("/devices", (req, res) => {this.listDevices(req,res)});
 		this.app.get("/:device/:command", (req, res) => {this.command(req,res)});
+	}
+	discovery(req,res) {
+		if (this.servers) {
+			Object.values(this.servers).forEach( (srv) => srv.discover() );
+			if (res) res.status(200).json({response:"discovey initiated"});
+		}
+		if (res) res.status(500).json({response:"discovey failed, no servers"});
 	}
 	listDevices(req,res) {
 		const devList = Object.keys(this.devices).map( (dev) => {
@@ -86,7 +116,7 @@ class serverManager {
 			}
 		}
 		device.id = this.uuidStore[device.uniqueName];
-		device.queryID = "uuid:" + device.id + this.USNbase;
+		device.queryID = "uuid:" + device.id + "::" + this.USNbase;
 		device.server = server;
 		device.location = "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID;
 		const UDN = "uuid:" + device.id;
@@ -108,7 +138,6 @@ class serverManager {
 							device.uniqueName + " - " + device.friendlyName + "\t" + device.id);
 	}
 	command(req,res) {
-		console.log("[serverManager][command]\t Command " + req.params.command + " for " + req.params.device + " Received" );
 		let dev;
 		Object.keys(this.devices).forEach( (key) => {
 			if (this.devices[key].queryID == req.params.device) dev = this.devices[key];
@@ -118,24 +147,21 @@ class serverManager {
 			res.status(500).send("invalid Device");
 			return null;
 		}
+		console.log("[serverManager][command]\t Command " + req.params.command + " for " + dev.uniqueName + " " + req.params.device + " Received" );
 		if (req.params.command == "query") {
-			let ssdpDescription = { root:{ $:{"xmlns": "urn:schemas-upnp-org:device-1-0" + " configId=" + "configuration number"},
-							specVersion: {major:1,minor:0},
-							device: null}};
-			let ssdpDevice = {deviceType: null, friendlyName: null, manufacturer: "DHC EA Consulting",
-								modelDescription: null, modelName: "LAN SmartDevice", modelNumber: "0001.0001",
-							serialNumber: "0001001", UDN: null, location: null, id: null};			
-			ssdpDevice.friendlyName = dev.friendlyName;
-			ssdpDevice.UDN = "uuid:" + dev.id;
-			ssdpDevice.location = "http://"+ IP.address() + ":" + this.config.serverPort + "/" + dev.queryID
-			ssdpDevice.id = dev.id;
-			ssdpDevice.modelName = dev.type;
-			ssdpDevice.queryID = dev.queryID;
-			ssdpDevice.deviceType = dev.type;
-			ssdpDevice.modelDescription = dev.type;
-			ssdpDescription.device = ssdpDevice;
-			let xml = XMLBuilder.buildObject(ssdpDescription);
-			res.send(xml);
+			let ssdpdesc =  new ssdpDescription( 
+										new ssdpDevice( {friendlyName: dev.friendlyName,
+														UDN: "uuid:" + dev.id,
+														location: "http://"+ IP.address() + ":" + this.config.serverPort + "/" + dev.queryID,
+														id: dev.id, 
+														modelName: dev.type,
+														queryID: dev.queryID,
+														deviceType: dev.type,
+														modelDescription: "LAN Smartdevice"}
+													)
+											)				
+			let xml = XMLBuilder.buildObject(ssdpdesc);
+			res.status(200).send(xml);
 			return null
 		}
 		if (req.params.command == "ping") {
@@ -143,14 +169,15 @@ class serverManager {
 			let serverIP = req.query.ip;
 			let serverPort = req.query.port;
 			//this.subscriptions[req.params.device] = {port: serverPort, ip: serverIP};
+			if (!this.subscriptions[dev.uniqueName]) this.subscriptions[dev.uniqueName] = []
 			this.subscriptions[dev.uniqueName].push({port: serverPort, ip: serverIP});
 			console.log("[serverManager][command]\t Subscription " + " for " + req.params.device + " " + serverIP + ":" + serverPort);
-			res.status(200).json("Received Ping");
+			res.status(200).json({response: "ping", cmd: "power", value:"off", level:0});
 			return null
 		}
 		if (req.params.command == "refresh") {
 			console.log("[serverManager][command]\t Refresh Received ");
-			res.status(200).json("Received Refresh");
+			res.status(200).json({response: "refresh", cmd: "power", value:"off", level:0});
 			return null
 		}
 		//const server = servers[dev.type]
@@ -163,7 +190,7 @@ class serverManager {
 		console.log("[baseSmartServer][command]\t Processing "  + req.params.command + " for " + req.params.device);
 		
 		server[req.params.command](dev,req.params.command,req.query);
-		res.status(200).json({response:"suceeded", command: req.params.command, subcommand:req.query});
+		res.status(200).json({response:"suceeded", cmd: req.params.command, value:req.query.value});
 		console.log("[serverManager][command]\t responded host=" + req.get("host") + 
 					" origin=" + req.get("origin") +
 					" remIP=" + req.socket.remoteAddress +
@@ -277,7 +304,7 @@ class bluetoothConnectServer extends baseSmartServer {
 					throw err;
 				}
 		} else {
-			console.log("[bluetoothConnectServer][getAdapter] returning current  Adapter " + util.inspect(this.adapter));
+			console.log("[bluetoothConnectServer][getAdapter] returning current  Adapter " + this.adapter.adapter);
 			return this.adapter;
 		}
 		console.log("[bluetoothConnectServer][getAdapter] Weirdness no return");
@@ -311,10 +338,10 @@ class bluetoothConnectServer extends baseSmartServer {
 		const self = this;
 		if ( (!device.bleDevice.isConnected) || !(await device.bleDevice.isConnected()) ){
 			try {
-				console.log("baseSmartServer:sendCommand: connecting to " + device.mac + " " + util.inspect(await this.adapter.devices()) )
+				console.log("baseSmartServer:sendCommand: connecting to " + device.mac )
 				//device.bleDevice = await this.adapter.waitDevice(device.device.mac,20 * 10000);
 				device.bleDevice = await this.adapter.waitDevice(device.mac);
-				console.log("baseSmartServer:sendCommand: connected to " + device.mac + " " + util.inspect(device.bleDevice) )
+				console.log("baseSmartServer:sendCommand: connected to " + device.mac )
 				if (device.bleDevice) {
 					await device.bleDevice.connect();
 					device.bleDevice.gattServer = await device.bleDevice.gatt();
@@ -336,37 +363,44 @@ class bluetoothConnectServer extends baseSmartServer {
 		await device.bleDevice.controlCharacteristic.writeValue(Buffer.from(bleCmd),{"type":"reliable"}); //command, request, reliable
 	}
 	power( device, cmd, subcmd ) {
-		console.log("Power command received " + cmd + util.inspect(subcmd))
+		console.log("Power command received " + cmd + " subcmd=" + util.inspect(subcmd))
 		this.sendCommand(device, cmd, subcmd.value )
 	}
 	level( device, cmd, subcmd ) {
+		console.log("level command received " + cmd + " subcmd=" + util.inspect(subcmd))
 		this.sendCommand(device, cmd, subcmd.value )
 	}
 	temperature( device, cmd, subcmd ) {
+		console.log("temperature command received " + cmd + " subcmd=" + util.inspect(subcmd))
 		this.sendCommand(device, cmd, subcmd.value )
 	}
 	color( device, cmd, subcmd ) {
+		console.log("Color command received " + cmd + " subcmd=" + util.inspect(subcmd))
 		this.sendCommand(device, cmd, subcmd.value )
 	}
 	async discover() {
 		const self = this;
 		const adapter = await this.getAdapter();
+		console.log("[bluetoothConnectServer][discover]  Adapter Obtained " + adapter.adapter);
 		if (! await this.adapter.isDiscovering()) await adapter.startDiscovery();
+		console.log("[bluetoothConnectServer][discover]  Adapter discovering " + await this.adapter.isDiscovering());
 		const retPromise = await new Promise(
 			(resolve,reject) => {
 				setTimeout( async () => {
 					try {
 						const discoveredDevices = await self.adapter.devices();
+						console.log("[bluetoothConnectServer][discover]  Discovered Devices " + JSON.stringify(discoveredDevices));
 						resolve(discoveredDevices);
 					} catch (err) {
 						reject("Error getting Devices in promise " + err);
 					}
 				},self.manager.config[self.type]["DiscoveryTime"]);
 			});
+		console.log("[bluetoothConnectServer][discover]  About to create promises ");
 		const devPromises =  retPromise.map( (device,ind) => this.processDevice(this.adapter,device) ); // With no await, this function returns a promise as it async!!!!
+		console.log("[bluetoothConnectServer][discover]  created promises ");
 		//let devs = await Promise.all(devPromises);
 		let devices = []
-		await this.adapter.stopDiscovery();
 		for ( let dev of (await Promise.all(devPromises)) ) {
 			const uniqueName = ((dev[3]=="No Name") ? dev[1] : dev[3]) + "[" + dev[0] + "]";
 			const deviceInConfig = self.manager.getDeviceInConfig(uniqueName,self.type);
@@ -385,6 +419,8 @@ class bluetoothConnectServer extends baseSmartServer {
 				self.manager.addDevice(device, self);
 			}
 		}
+		console.log("[bluetoothConnectServer][discover]  About to stop Discovery");
+		await this.adapter.stopDiscovery();
 	}
 }
 const ICloud = require('./icloud').iCloud;
