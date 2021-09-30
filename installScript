@@ -6,5 +6,5 @@ sudo usermod -a -G smartdev,dialout smartdev
 // copy the service file to /etc/systemd/system/
 // All files to  /var/opt/node
 sudo chgrp -R smartdev /var/opt/node/smartthings-edge-lanserver/
-sudo systemctl start baseServer.service
-sudo systemctl enable baseServer.service
+sudo systemctl start serverManager.service
+sudo systemctl enable serverManager.service
