@@ -1,7 +1,7 @@
 
 const {createBluetooth} = require('node-ble');
 const {bluetooth, destroy} = createBluetooth();
-class bluetoothConnectServer {
+class BTConnectServer {
 	constructor(manager) {
 		this.manager = manager;
 		this.validCommands = [];
@@ -18,13 +18,13 @@ class bluetoothConnectServer {
 		}
 	}
 	dumpDevices(){
-		console.log("[bluetoothConnectServer][dumpdevices]\t " + this.devices.length + " devices found");
+		console.log("[BTConnectServer][dumpdevices]\t " + this.devices.length + " devices found");
 		this.devices.forEach( (dev) => {
-			console.log("[bluetoothConnectServer][dumpdevices]\t dev=" + JSON.stringify(dev));
+			console.log("[BTConnectServer][dumpdevices]\t dev=" + JSON.stringify(dev));
 			});
 	}
 	async getAdapter() {
-		console.log("[bluetoothConnectServer][getAdapter] Getting Adapter " + (this.adapter=={}));
+		console.log("[BTConnectServer][getAdapter] Getting Adapter " + (this.adapter=={}));
 		//need to sort out gAdapter
 		if ( (this.adapter=={}) || (!this.adapter) ) {
 			console.log("BTDeviceHandler.getAdapter\t Creating Adapter");
@@ -36,10 +36,10 @@ class bluetoothConnectServer {
 					throw err;
 				}
 		} else {
-			console.log("[bluetoothConnectServer][getAdapter] returning current  Adapter " + this.adapter.adapter);
+			console.log("[BTConnectServer][getAdapter] returning current  Adapter " + this.adapter.adapter);
 			return this.adapter;
 		}
-		console.log("[bluetoothConnectServer][getAdapter] Weirdness no return");
+		console.log("[BTConnectServer][getAdapter] Weirdness no return");
 	}
 	async processDevice(adapter,device) {
 		let dev = await this.adapter.getDevice(device);
@@ -113,24 +113,24 @@ class bluetoothConnectServer {
 	async discover() {
 		const self = this;
 		const adapter = await this.getAdapter();
-		console.log("[bluetoothConnectServer][discover]  Adapter Obtained " + adapter.adapter);
+		console.log("[BTConnectServer][discover]  Adapter Obtained " + adapter.adapter);
 		if (! await this.adapter.isDiscovering()) await adapter.startDiscovery();
-		console.log("[bluetoothConnectServer][discover]  Adapter discovering " + await this.adapter.isDiscovering());
+		console.log("[BTConnectServer][discover]  Adapter discovering " + await this.adapter.isDiscovering());
 		const retPromise = await new Promise(
 			(resolve,reject) => {
 				setTimeout( async () => {
 					try {
 						const discoveredDevices = await self.adapter.devices();
-						console.log("[bluetoothConnectServer][discover]  Discovered Devices " + JSON.stringify(discoveredDevices));
+						console.log("[BTConnectServer][discover]  Discovered Devices " + JSON.stringify(discoveredDevices));
 						resolve(discoveredDevices);
 					} catch (err) {
 						reject("Error getting Devices in promise " + err);
 					}
 				},self.manager.config[self.type]["DiscoveryTime"]);
 			});
-		console.log("[bluetoothConnectServer][discover]  About to create promises ");
+		console.log("[BTConnectServer][discover]  About to create promises ");
 		const devPromises =  retPromise.map( (device,ind) => this.processDevice(this.adapter,device) ); // With no await, this function returns a promise as it async!!!!
-		console.log("[bluetoothConnectServer][discover]  created promises ");
+		console.log("[BTConnectServer][discover]  created promises ");
 		//let devs = await Promise.all(devPromises);
 		let devices = []
 		for ( let dev of (await Promise.all(devPromises)) ) {
@@ -151,8 +151,8 @@ class bluetoothConnectServer {
 				self.manager.addDevice(device, self);
 			}
 		}
-		console.log("[bluetoothConnectServer][discover]  About to stop Discovery");
+		console.log("[BTConnectServer][discover]  About to stop Discovery");
 		await this.adapter.stopDiscovery();
 	}
 }
-module.exports = bluetoothConnectServer;
+module.exports = BTConnectServer;

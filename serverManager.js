@@ -7,7 +7,7 @@ const XMLBuilder = new xml2js.Builder();
 const nodessdp = require('node-ssdp').Server;
 //const findIphoneServer = require("./findIphoneServer");
 //const rfxcomServer = require("./rfxcomServer");
-//const bluetoothConnectServer = require("./bluetoothConnectServer");
+//const BTConnectServer = require("./BTConnectServer");
 const IP = require("ip");
 const { v4: uuidv4 } = require('uuid');
 let nCalls = 0;
@@ -44,14 +44,14 @@ class serverManager {
 		this.app = express();
 		this.config = config;
 		this.app.listen(config.serverPort, "0.0.0.0", () => {
-			console.log("[serverManager]\t\t " + "listening on port " + config.serverPort);
+			console.log("[serverManager]\t\t\t " + "listening on port " + config.serverPort);
 		});
 		this.servers = {};
 		this.SSDPServers = {};
 		this.USNbase = this.config["ssdpConfig"].schema + "device:" + "smartdev:1"
 
-		//this.classMap = { bluetoothConnectServer: bluetoothConnectServer, rfxcomServer: rfxcomServer, findIphoneServer: findIphoneServer}
-		this.classMap = { bluetoothConnectServer: require("./bluetoothConnectServer"), 
+		//this.classMap = { BTConnectServer: BTConnectServer, rfxcomServer: rfxcomServer, findIphoneServer: findIphoneServer}
+		this.classMap = { BTConnectServer: require("./BTConnectServer"), 
 							rfxcomServer: require("./rfxcomServer"),
 							findIphoneServer: require("./findIphoneServer")
 							}
@@ -80,7 +80,7 @@ class serverManager {
 					this.servers[server.type] = server;
 					
 					server.discover();
-					console.log("Creating " + srv);
+					console.log("[serverManager] \t\t\tCreating " + srv);
 				}
 			})
 		}
@@ -141,7 +141,7 @@ class serverManager {
 		this.SSDPServers[device.uniqueName].addUSN(this.USNbase);
 		this.SSDPServers[device.uniqueName].start();
 		this.devices[device.uniqueName] = device;
-		console.log("[serverManager][addDevice] Created Device for " + device.type + "\t" +
+		console.log("[serverManager][addDevice] \tCreated Device for " + device.type + "\t" +
 							device.uniqueName + " - " + device.friendlyName + "\t" + device.id);
 	}
 	command(req,res) {

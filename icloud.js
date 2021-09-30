@@ -27,7 +27,7 @@ class iCloud {
 		var self = this;
 		this.checkSession(function(err, res, body) {
 			if (err) {
-				console.log("Session invalid " + err);
+				console.log("[icloud] \tSession invalid " + err);
 				//session is dead, start new
 				self.iRequest = request.defaults({
 					jar: self.jar,
@@ -41,7 +41,7 @@ class iCloud {
 					return callback(err, res, body);
 				});
 			} else {
-				console.log("reusing session");
+				console.log("[icloud] \treusing session");
 				return callback(err, res, body);
 			}
 		});
@@ -78,7 +78,7 @@ class iCloud {
 		this.iRequest.post(options, function(error, response, body) {
 
 			if (!response || (response.statusCode != 200) ) {
-				return callback("Could not refresh session " + response?.statusCode);
+				return callback("[iCloud] Could not refresh session " + response?.statusCode);
 			}
 
 			self.onLogin(JSON.parse(body), function(err, resp, body) {
@@ -90,7 +90,7 @@ class iCloud {
 	onLogin(body, callback) {
 		if (body.hasOwnProperty("webservices") && body.webservices.hasOwnProperty("findme")) {
 			this.base_path = body.webservices.findme.url;
-			console.log("Findme URL =" + this.base_path);
+			console.log("[icloud] \tFindme URL =" + this.base_path);
 
 			var options = {
 				url: this.base_path + "/fmipservice/client/web/initClient",
@@ -120,7 +120,7 @@ class iCloud {
 				}
                         });
 		} else {
-			return callback("cannot parse webservice findme url");
+			return callback("[icloud] \tcannot parse webservice findme url");
 		}
 	}
 
@@ -160,7 +160,7 @@ class iCloud {
 				"device": deviceId
 			}
 		};
-		console.log("Abouyt to post an alert " + JSON.stringify(options));
+		console.log("[icloud] \tAbout to post an alert " + JSON.stringify(options));
 		this.iRequest.post(options, callback);
 	}
 

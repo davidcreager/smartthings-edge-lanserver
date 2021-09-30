@@ -1,7 +1,7 @@
 {
 	"config": {
 		"startServers": {
-							"bluetoothConnectServer": true,
+							"BTConnectServer": true,
 							"rfxcomServer": false,
 							"findIphoneServer": true
 						},
