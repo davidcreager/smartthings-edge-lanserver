@@ -1,0 +1,3 @@
+alias smartthings='~/smartthings'
+alias package='~/smartthings edge:drivers:package '
+alias logcat='clear;~/smartthings edge:drivers:logcat --hub-address=192.168.1.65'

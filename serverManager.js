@@ -19,14 +19,14 @@ const simpLog = function(typ,obj,newb) {
 }
 
 class ssdpDevice {
-	constructor({deviceType, friendlyName, UDN, location, id, modelDescription, queryID} = {}) {
+	constructor({deviceType, friendlyName, UDN, location, id, modelDescription, queryID, modelName} = {}) {
 		this.deviceType = deviceType;
 		this.friendlyName = friendlyName;
 		this.UDN = UDN;
 		this.location = location;
 		this.id = id;
 		this.manufacturer = "DHC EA Consulting";
-		this.modelName = deviceType;
+		this.modelName = modelName;
 		this.modelNumber = "0001.0001";
 		this.modelDescription = modelDescription;
 		this.serialNumber = "0001001";
@@ -143,8 +143,9 @@ class serverManager {
 		this.SSDPServers[device.uniqueName].addUSN(this.USNbase);
 		this.SSDPServers[device.uniqueName].start();
 		this.devices[device.uniqueName] = device;
-		console.log("[serverManager][addDevice]\t Created Device for " + device.type + "\t" +
-							device.uniqueName + " - " + device.friendlyName + "\t" + device.id);
+		console.log("[serverManager][addDevice]\t Created Device for " + device.type + "\t" + 
+							" Profile=" + device.modelName +
+							"\t" + device.uniqueName + " - " + device.friendlyName + "\t" + device.id);
 	}
 	command(req,res) {
 		let dev;
@@ -163,10 +164,10 @@ class serverManager {
 														UDN: "uuid:" + dev.id,
 														location: "http://"+ IP.address() + ":" + this.config.serverPort + "/" + dev.queryID,
 														id: dev.id, 
-														modelName: dev.type,
+														modelName: dev.modelName,
 														queryID: dev.queryID,
 														deviceType: dev.type,
-														modelDescription: "LAN Smartdevice"}
+														modelDescription: dev.lanDeviceType}
 													)
 											)				
 			let xml = XMLBuilder.buildObject(ssdpdesc);
