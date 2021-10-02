@@ -10,6 +10,7 @@ const nodessdp = require('node-ssdp').Server;
 //const BTConnectServer = require("./BTConnectServer");
 const IP = require("ip");
 const { v4: uuidv4 } = require('uuid');
+const Device = require("./lanDevice.js")
 let nCalls = 0;
 let cnt =0;
 const simpLog = function(typ,obj,newb) {
@@ -76,11 +77,11 @@ class serverManager {
 			Object.keys(this.config.startServers).forEach( (srv) => {
 				if (this.config.startServers[srv]) {
 					const server = new this.classMap[srv](this)
-					if (this.servers[server.type]) console.error("[serverManager] creating servers weird! more than one per type");
-					this.servers[server.type] = server;
+					if (this.servers[server.serverType]) console.error("[serverManager] creating servers weird! more than one per type");
+					this.servers[server.serverType] = server;
 					
 					server.discover();
-					console.log("[serverManager] \t\t\tCreating " + srv);
+					console.log("[serverManager]\t\t\t Creating " + srv);
 				}
 			})
 		}
@@ -122,6 +123,7 @@ class serverManager {
 				console.error("[serverManager]\t\t Writing uuidStore error code=" + e.code + " error is " +  e);
 			}
 		}
+		//console.log("DEBUG " + util.inspect(device))
 		device.id = this.uuidStore[device.uniqueName];
 		device.queryID = "uuid:" + device.id + "::" + this.USNbase;
 		device.server = server;
@@ -141,7 +143,7 @@ class serverManager {
 		this.SSDPServers[device.uniqueName].addUSN(this.USNbase);
 		this.SSDPServers[device.uniqueName].start();
 		this.devices[device.uniqueName] = device;
-		console.log("[serverManager][addDevice] \tCreated Device for " + device.type + "\t" +
+		console.log("[serverManager][addDevice]\t Created Device for " + device.type + "\t" +
 							device.uniqueName + " - " + device.friendlyName + "\t" + device.id);
 	}
 	command(req,res) {

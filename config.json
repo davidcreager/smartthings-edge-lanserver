@@ -25,21 +25,24 @@
 					"friendlyName": "Candela 1",
 					"SERVICE_UUID": "0000fe87-0000-1000-8000-00805f9b34fb",
 					"CONTROL_UUID": "aa7d3f34-2d4f-41e0-807f-52fbf8cf7443",
-					"NOTIFY_UUID": "8f65073d-9f57-4aaa-afea-397d19d5bbeb"
+					"NOTIFY_UUID": "8f65073d-9f57-4aaa-afea-397d19d5bbeb",
+					"lanDeviceType": "candela"
 				},
 				{
 					"uniqueName": "yeelight_ms[F8:24:41:C0:51:71]",
 					"friendlyName": "Candela 2",
 					"SERVICE_UUID": "0000fe87-0000-1000-8000-00805f9b34fb",
 					"CONTROL_UUID": "aa7d3f34-2d4f-41e0-807f-52fbf8cf7443",
-					"NOTIFY_UUID": "8f65073d-9f57-4aaa-afea-397d19d5bbeb"
+					"NOTIFY_UUID": "8f65073d-9f57-4aaa-afea-397d19d5bbeb",
+					"lanDeviceType": "candela"
 				},
 				{
 					"uniqueName": "XMCTD_0D18[F8:24:41:E9:0D:18]",
 					"friendlyName": "Bedside 1",
 					"SERVICE_UUID": "8e2f0cbd-1a66-4b53-ace6-b494e25f87bd",
 					"CONTROL_UUID": "aa7d3f34-2d4f-41e0-807f-52fbf8cf7443",
-					"NOTIFY_UUID": "8f65073d-9f57-4aaa-afea-397d19d5bbeb"
+					"NOTIFY_UUID": "8f65073d-9f57-4aaa-afea-397d19d5bbeb",
+					"lanDeviceType": "bedside"
 				}
 			]
 		},
@@ -50,11 +53,13 @@
 			"deviceMapping": [
 				{
 					"uniqueName": "iPhone[iPhone 12 Pro]",
-					"friendlyName": "David's iPhone"
+					"friendlyName": "David's iPhone",
+					"lanDeviceType": "iphone"
 				},
 				{
 					"uniqueName": "Rosie's Iphone[iPhone 11]",
-					"friendlyName": "Rosie''s iPhone"
+					"friendlyName": "Rosie''s iPhone",
+					"lanDeviceType":  "iphone"
 				}
 			]
 		}

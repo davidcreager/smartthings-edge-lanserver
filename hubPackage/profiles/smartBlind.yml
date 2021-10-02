@@ -1,0 +1,14 @@
+name: SmartBlind.v1
+components:
+- id: main
+  capabilities:
+  - id: windowShade
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Blind
+metadata:
+  deviceType: Blind
+  ocfDeviceType: oic.d.blind
+  deviceTypeId: Blind

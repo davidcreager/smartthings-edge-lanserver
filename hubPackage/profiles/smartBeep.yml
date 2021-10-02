@@ -1,0 +1,14 @@
+name: SmartBeep.v1
+components:
+- id: main
+  capabilities:
+  - id: tone
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Siren
+metadata:
+  deviceType: siren
+  ocfDeviceType: x.com.st.d.siren
+  deviceTypeId: Beep

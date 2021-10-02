@@ -1,14 +1,16 @@
+'use strict';
 const ICloud = require('./icloud').iCloud;
 const Encrypter = require('./encrypt');
+const Device = require("./lanDevice.js")
 class findIphoneServer {
 	constructor(manager) {
 		this.manager = manager;
 		this.validCommands = [];
 		this.encrypter = new Encrypter("bollocks");
-		this.type = "findIphone";
-		let appleID = this.manager.config[this.type].apple_id
-		let applePwd = this.manager.config[this.type].password;
-		if (this.manager.config[this.type].encrypted == true) {
+		this.serverType = "findIphone";
+		let appleID = this.manager.config[this.serverType].apple_id;
+		let applePwd = this.manager.config[this.serverType].password;
+		if (this.manager.config[this.serverType].encrypted == true) {
 			appleID = this.encrypter.dencrypt(appleID);
 			applePwd = this.encrypter.dencrypt(applePwd);
 		}
@@ -59,19 +61,20 @@ class findIphoneServer {
 				console.log("[findIphoneServer][discover]\t Found " + devices.length.toString() + " devices");
 				devices.forEach( (dev) => {
 					const uniqueName = dev.name + "[" + dev.deviceDisplayName + "]";
-					const deviceInConfig = self.manager.getDeviceInConfig(uniqueName,self.type);
+					const deviceInConfig = self.manager.getDeviceInConfig(uniqueName,self.serverType);
 					if ( !self.manager.devices[uniqueName] && deviceInConfig  ) {
-						let device = {
+						let device = new Device({
 							uniqueName: uniqueName,
-							type: self.type,
-							config: deviceInConfig,
 							friendlyName: deviceInConfig.friendlyName,
+							type: self.serverType,
+							config: deviceInConfig,
+							lanDeviceType: deviceInConfig.lanDeviceType,
 							deviceID: dev.id,
 							alias: null,
 							addressType: null,
 							mac: null,
 							bleDevice: null
-							};
+							});
 						self.manager.addDevice(device, self);
 					}
 				});

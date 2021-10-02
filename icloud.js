@@ -3,7 +3,7 @@ const util = require("util");
 const tough = require('tough-cookie');
 const Store = tough.MemoryCookieStore;
 const fileStore = require('tough-cookie-file-store').FileCookieStore;
-console.log(fileStore);
+//console.log(fileStore);
 let test = new fileStore("./jar.test");
 class iCloud {
 	constructor(apple_id, password) {
@@ -27,7 +27,7 @@ class iCloud {
 		var self = this;
 		this.checkSession(function(err, res, body) {
 			if (err) {
-				console.log("[icloud] \tSession invalid " + err);
+				console.log("[icloud]\t\t\t Session invalid " + err);
 				//session is dead, start new
 				self.iRequest = request.defaults({
 					jar: self.jar,
@@ -41,7 +41,7 @@ class iCloud {
 					return callback(err, res, body);
 				});
 			} else {
-				console.log("[icloud] \treusing session");
+				console.log("[icloud]\t\t\t Reusing session");
 				return callback(err, res, body);
 			}
 		});
@@ -90,7 +90,7 @@ class iCloud {
 	onLogin(body, callback) {
 		if (body.hasOwnProperty("webservices") && body.webservices.hasOwnProperty("findme")) {
 			this.base_path = body.webservices.findme.url;
-			console.log("[icloud] \tFindme URL =" + this.base_path);
+			console.log("[icloud]\t\t\t Findme URL =" + this.base_path);
 
 			var options = {
 				url: this.base_path + "/fmipservice/client/web/initClient",
@@ -160,7 +160,7 @@ class iCloud {
 				"device": deviceId
 			}
 		};
-		console.log("[icloud] \tAbout to post an alert " + JSON.stringify(options));
+		console.log("[icloud]\t\t\t About to post an alert " + JSON.stringify(options));
 		this.iRequest.post(options, callback);
 	}
 

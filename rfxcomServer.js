@@ -1,11 +1,12 @@
-
+'use strict';
 const rfxcom = require('rfxcom');
+const Device = require("./lanDevice.js")
 class rfxcomServer {
 	constructor(manager) {
 		this.manager = manager;
 		this.validCommands = [];
-		this.type = "rfxcom";
-		this.rfxtrx = new rfxcom.RfxCom(config[this.type].usbPort, {debug: false});
+		this.serverType = "rfxcom";
+		this.rfxtrx = new rfxcom.RfxCom(config[this.serverType].usbPort, {debug: false});
 		this.rfy = new rfxcom.Rfy(this.rfxtrx, rfxcom.rfy.RFY);
 		this.validCommands = ["up", "down", "stop","doCommand"];
 		this.managementCommands = ["program", "erase", "eraseAll", "listRemotes"];
@@ -35,19 +36,20 @@ class rfxcomServer {
 				msg.forEach( (dev) => {
 					console.log("[rfxcomserver][deviceDiscovered]\t remote found " + JSON.stringify(dev));
 					const uniqueName = dev.deviceId + "[" + dev.unitCode + "]";
-					const deviceInConfig = self.manager.getDeviceInConfig(uniqueName,self.type);
+					const deviceInConfig = self.manager.getDeviceInConfig(uniqueName,self.serverType);
 					if ( !self.manager.devices[uniqueName] && deviceInConfig  ) {
-						let device = {
+						let device = new Device({
 							uniqueName: uniqueName,
-							type: self.type,
-							config: deviceInConfig,
 							friendlyName: deviceInConfig.friendlyName,
+							type: self.serverType,
+							config: deviceInConfig,
+							lanDeviceType: deviceInConfig.lanDeviceType,
 							deviceID: dev.deviceId,
 							alias: null,
 							addressType: null,
 							mac: null,
 							bleDevice: null
-							};
+							});
 						this.manager.addDevice(device, this);
 					}					
 				});
