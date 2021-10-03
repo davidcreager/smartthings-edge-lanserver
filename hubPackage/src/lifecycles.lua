@@ -1,20 +1,17 @@
-
 local config = require('config')
 local commands = require('commands')
 local lifecycle_handler = {}
-
 function lifecycle_handler.init(driver, device)
   -------------------
   -- Set up scheduled
   -- services once the
   -- driver gets
   -- initialized.
-
+  
   -- Ping schedule.
   device.thread:call_on_schedule(
     config.SCHEDULE_PERIOD,
     function ()
-      --return commands.command(driver, device,"ping")
 	  return commands.command(driver, device, {command="ping"})
     end,
     'Ping schedule')
@@ -23,7 +20,6 @@ function lifecycle_handler.init(driver, device)
   device.thread:call_on_schedule(
     config.SCHEDULE_PERIOD,
     function ()
-      --return commands.command(driver, device,"refresh")
 	  return commands.command(driver, device, {command="refresh"})
     end,
     'Refresh schedule')

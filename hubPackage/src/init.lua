@@ -36,7 +36,7 @@ local driver =
 ---------------------------------------
 -- Switch control for external commands
 function driver:command(device, command)
- log.debug("init:driver:command Received command via server id=" .. (device.id or "nil").. " command was " .. (command or "nil"))
+ log.debug("[init:driver:command]\t Received command via server id=" .. (device.id or "nil").. " command was " .. (command or "nil"))
 end
 
 -----------------------------
