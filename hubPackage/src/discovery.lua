@@ -1,4 +1,5 @@
 local socket = require('socket')
+local utils = require('st.utils')
 local http = require('socket.http')
 local ltn12 = require('ltn12')
 local log = require('log')
@@ -26,26 +27,22 @@ end
 -- <device_location>/<device_name>.xml
 -- from SSDP Response Location header
 local function fetch_device_info(url)
-  --log.info('discover:fetch_device: url=' .. (url or "nil"))
-  local res = {}
+  local response = {}
   local _, status = http.request({
     url=url,
-    sink=ltn12.sink.table(res)
+    sink=ltn12.sink.table(response)
   })
-  --print("fetch_device_info: url=" .. url .. " status " .. status )
   if (status == 200) then
-	  --print("fetch_device_info res=" .. inspect(res))
 	  local xmlres = xml_handler:new()
 	  local xml_parser = xml2lua.parser(xmlres)
-	  xml_parser:parse(table.concat(res))
-	  -- Device metadata
+	  xml_parser:parse(table.concat(response))
 	  local meta = xmlres.root.root.device
-	  --print("fetch_device_info meta is" .. inspect(meta))
 	  if not xmlres.root or not meta then
 		log.error('discover:fetch_device: Failed to fetch Metadata url=' .. (url or "nil"))
-		--print("===== FAILED TO FETCH METADATA AT: " .. url)
 		return nil
 	  end
+	  --log.trace("DEBUG meta=" .. utils.stringify_table(meta))
+	  print("[discovery][fetch_device_info]\t Fetched name=" .. meta.friendlyName .. " modelName=" .. meta.modelName .. " queryID=" .. meta.queryID)
 	  return { name = meta.friendlyName, id = meta.id, location = meta.location,
 				device_network_id = meta.queryID,
 				UDN = meta.UDN, vendor = meta.UDN, mn = meta.manufacturer, model = meta.modelName }	  
@@ -94,20 +91,18 @@ end
 local function make_device(fetchedMeta)
 --make_device takes metadata from the device description (fetch_device_info) and makes it into something for the driver
   --print("make_device: fetchedMeta=" .. inspect(fetchedMeta))
-  local profiles = { rfxcom = "SmartBlind.v1", bluetoothConnect = "SmartDevice.v1", findIphone = "SmartBeep.v1"}
-  local profile = profiles[fetchedMeta.model] or config.DEVICE_PROFILE
-	log.info('discover:make_device: name=' .. (fetchedMeta.name or "nil") .. 
-				--' location=' .. (fetchedMeta.location or "nil") ..
-				' device_network_id=' .. (fetchedMeta.device_network_id or "nil"),
-				profile
-					)
+  --local profiles = { rfxcom = "SmartBlind.v1", bluetoothConnect = "SmartDevice.v1", findIphone = "SmartBeep.v1"}
+  --local profile = profiles[fetchedMeta.model] or config.DEVICE_PROFILE
+	log.info('discover:make_device: called for name=' .. (fetchedMeta.name or "nil") .. 
+							' profile=' .. (fetchedMeta.model or "nil") ..
+							' device_network_id=' .. (fetchedMeta.device_network_id or "nil") )
   local metadata = {
     type = config.DEVICE_TYPE,
     device_network_id = fetchedMeta.device_network_id,
 	location = fetchedMeta.location,
 	UDN = fetchedMeta.UDN,
     label = fetchedMeta.name,
-    profile = profile,
+    profile = fetchedMeta.model,
     manufacturer = fetchedMeta.mn,
     model = fetchedMeta.model,
     vendor_provided_label = string.gsub(fetchedMeta.UDN,"uuid:",""),
