@@ -2,19 +2,20 @@
 const util = require("util")
 const {createBluetooth} = require('node-ble');
 const {bluetooth, destroy} = createBluetooth();
-const Device = require("./lanDevice.js")
+const Device = require("./lanDevice.js");
+//const colors = require('color-convert');
 class BTConnectServer {
 	constructor(manager) {
 		this.manager = manager;
 		this.validCommands = [];
 		this.serverType = "bluetoothConnect";
-		this.validCommands = ["power", "color","temperature","level"];
+		this.validCommands = ["on", "off", "setColor","temperature","level"];
 		this.managementCommands = [];
 		this.adapter = null;
 		this.cmdLookup = {
 			power:		[[0x43,0x40],[]],     		// 0x01 is on 0x02 off],
 			level:		[[0x43,0x42],[]],  			/// plus parsint(tostring(16)level, 16)  0-64
-			color:		[[0x43,0x41],[0xFF,0x65]], 	//r,g,b in the middle  parseInt(tostring(16),16)
+			setColor:	[[0x43,0x41],[0xFF,0x65]], 	//r,g,b in the middle  parseInt(tostring(16),16)
 			ct:			[0x43,0x43,0x00,0x00,0x00],
 			notify:		[0x43,0x67,0xde,0xad,0xbe,0xbf]
 		}
@@ -59,6 +60,7 @@ class BTConnectServer {
 		console.log("[BTConnectServer][receiveNotification]\t " + data[2] + " bright: " + data[8]);
 	}
 	async sendCommand(device, cmd, subcmd) {
+		console.log("[BTConnectServer][sendCommand]\t received command=" + cmd + " subcmd=" + util.inspect(subcmd) + " for " + device.uniqueName);
 		const bleMagic = [];
 		bleMagic.length = 18;
 		bleMagic[0] = 0x43;bleMagic[1] = 0x67;bleMagic[2] = 0xde;bleMagic[3] = 0xad;bleMagic[4] = 0xbe;bleMagic[5] = 0xbf;
@@ -66,7 +68,12 @@ class BTConnectServer {
 		this.cmdLookup[cmd][0].forEach( (val,ind) => bleCmd.push(val) );
 		if (cmd=="power") bleCmd.push( ((subcmd=="off") ? 0x02 : 0x01) )
 		if (cmd=="level") bleCmd.push(parseInt(subcmd.toString(16),16));
-		if (cmd=="color") colors[subcmd].forEach((val)=> bleCmd.push(parseInt(val.toString(16),16)))
+		//if (cmd=="setColor") colors[subcmd].forEach((val)=> bleCmd.push(parseInt(val.toString(16),16)))
+		if (cmd=="setColor") {
+			bleCmd.push(parseInt(subcmd.red.toString(16),16));
+			bleCmd.push(parseInt(subcmd.green.toString(16),16));
+			bleCmd.push(parseInt(subcmd.blue.toString(16),16));
+		}
 		this.cmdLookup[cmd][1].forEach( (val,ind) => bleCmd.push(val) );
 		bleCmd.length = 18
 		const self = this;
@@ -96,10 +103,19 @@ class BTConnectServer {
 		await device.bleDevice.controlCharacteristic.writeValue(Buffer.from(bleMagic),{"type":"reliable"}); //command, request, reliable
 		await device.bleDevice.controlCharacteristic.writeValue(Buffer.from(bleCmd),{"type":"reliable"}); //command, request, reliable
 	}
+	on( device, cmd, subcmd ) {
+		console.log("[BTConnectServer][power]\t Power command received " + cmd + " subcmd=" + util.inspect(subcmd));
+		this.sendCommand(device, "power", "on" )
+	}
+	off( device, cmd, subcmd ) {
+		console.log("[BTConnectServer][power]\t Power command received " + cmd + " subcmd=" + util.inspect(subcmd));
+		this.sendCommand(device,  "power", "off")
+	}
 	power( device, cmd, subcmd ) {
 		console.log("[BTConnectServer][power]\t Power command received " + cmd + " subcmd=" + util.inspect(subcmd));
 		this.sendCommand(device, cmd, subcmd.value )
 	}
+
 	level( device, cmd, subcmd ) {
 		console.log("[BTConnectServer][level]\t level command received " + cmd + " subcmd=" + util.inspect(subcmd));
 		this.sendCommand(device, cmd, subcmd.value )
@@ -108,9 +124,9 @@ class BTConnectServer {
 		console.log("[BTConnectServer][temperature]\t temperature command received " + cmd + " subcmd=" + util.inspect(subcmd));
 		this.sendCommand(device, cmd, subcmd.value )
 	}
-	color( device, cmd, subcmd ) {
+	setColor( device, cmd, subcmd ) {
 		console.log("[BTConnectServer][color]\t color command received " + cmd + " subcmd=" + util.inspect(subcmd));
-		this.sendCommand(device, cmd, subcmd.value )
+		this.sendCommand(device, cmd, subcmd )
 	}
 	async discover() {
 		const self = this;
@@ -153,7 +169,10 @@ class BTConnectServer {
 								bleDevice: {}
 							});
 				self.manager.addDevice(device, self);
+			} else {
+				console.log("[BTConnectServer][discover]\t Config not found " + uniqueName + "\t" +dev[0] + "\t" + dev[1]);
 			}
+			
 		}
 		console.log("[BTConnectServer][discover]\t About to stop Discovery");
 		await this.adapter.stopDiscovery();
