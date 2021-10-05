@@ -10,7 +10,7 @@ local log = require('log')
 local config = require('config')
 local client = {}
 function client.new(meta)
-	log.info('[lanclient:client.new]\t creating client label=' .. (meta.label or "nil") ..
+	print('[lanclient:client.new]\t creating client label=' .. (meta.label or "nil") ..
 		' location=' .. (meta.location or "nil"))
 	-- device metadata table
 	local metadata = {}
@@ -30,18 +30,19 @@ function client.new(meta)
 end
 function client:_call(method, ...)
 	local params = {...} or {}
-	print("[lanclient:client:_call]\t DEBUG 2 method=" .. method .. " params=",utils.stringify_table(params))
+	print("[lanclient:client:_call]\t DEBUG 3 method=" .. method .. " params=",utils.stringify_table(params))
 	local url = self.location .. "/" .. method
 	local ret,jsonresp = client:send_lan_command(url, params[1])
 	if not ret then
-		log.info("[lanclient:client:_call]\t Lan Command Failed", jsonresp)
+		log.error("[lanclient:client:_call]\t Lan Command Failed", jsonresp)
 		return nil
 	end
 	return jsonresp or true
 end
 function client:command(command)
-	print("[lanclient:client:command]\t DEBUG 1 command=" .. utils.stringify_table(command[1])," command.command=",command[1].command)
-	return self:_call(command[1].command, command[1].args)
+	print("[lanclient:client:command]\t DEBUG 2 command=" .. utils.stringify_table(command)," command.command=",command.command)
+	--return self:_call(command[1].command, command[1].args)
+	return self:_call(command.command, command.args)
 end
 -- Send LAN HTTP Request
 function client:send_lan_command(url, query)
@@ -52,13 +53,13 @@ function client:send_lan_command(url, query)
 			dest_url.query[k] = v
 		end
 	end
-	print("[lanclient:client:send_lan_command]\t dest_url=" .. dest_url:build() .. " url=" .. url .. " query=" .. utils.stringify_table(query))
+	print("[lanclient:client:send_lan_command]\t DEBUG 4 dest_url=" .. dest_url:build() .. " url=" .. url .. " query=" .. utils.stringify_table(query))
 	local _,code,_ = http.request{
 					url = dest_url:build(),
 					sink = ltn12.sink.table(res_body)
 					}
 	if code == 200 then
-		print("[lanclient:client:send_lan_command]\t Received Response", table.concat(res_body), " for ",dest_url)
+		print("[lanclient:client:send_lan_command]\t DEBUG 5 Received Response", table.concat(res_body), " for ",dest_url)
 		return true, table.concat(res_body)
 	end
 	log.error('[lanclient:client:send_lan_command]\t http failed code=' .. (code or "nil"))

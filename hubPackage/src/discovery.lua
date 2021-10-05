@@ -82,11 +82,7 @@ local function find_device(devsFound, currentDevs, devToFind)
 		--print(inspect(res))
 		if res and errOrIP ~= "timeout" then
 			parsed = parse_ssdp(res)
-			--print("find_device parsed is " .. inspect(parsed))
-			--print("find_device name=" .. inspect(parsed["name.smartthings.com"]) .. " parsed.usn " .. inspect(parsed.usn) .. " devsFound[] ")
-			--print("find_device: Checking devIDtoFind=",devIDtoFind," parsed.usn=",parsed.usn, " devFound=", devFound )
 			if devIDtoFind and parsed and parsed.usn == devIDtoFind then
-				--print("find_device: Found devIDtoFind=",devIDtoFind," parsed.usn=",parsed.usn)
 				devFound = true
 			end
 			if (not devFound) and 
