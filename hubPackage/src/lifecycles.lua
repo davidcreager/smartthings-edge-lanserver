@@ -12,7 +12,7 @@ function lifecycle_handler.init(driver, device)
   device.thread:call_on_schedule(
     config.SCHEDULE_PERIOD,
     function ()
-	  return commands.command(driver, device, {command="ping"})
+	  return commands.command(driver, device, {command="ping",args={ip = driver.server.ip, port = driver.server.port}})
     end,
     'Ping schedule')
 
@@ -37,7 +37,7 @@ function lifecycle_handler.added(driver, device)
   --commands.command(driver, device,"refresh")
   --commands.command(driver, device,"ping")
   commands.command(driver, device, {command="refresh"})
-  commands.command(driver, device, {command="ping"})
+  commands.command(driver, device, {command="ping",args={ip = driver.server.ip, port = driver.server.port}})
 end
 
 function lifecycle_handler.removed(driver, device)

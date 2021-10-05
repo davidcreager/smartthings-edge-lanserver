@@ -10,31 +10,29 @@ local log = require('log')
 local config = require('config')
 local client = {}
 function client.new(meta)
-  log.info('[lanclient:client.new]\t creating client label=' .. (meta.label or "nil") ..
-			' location=' .. (meta.location or "nil"))
-  -- device metadata table
-  local metadata = {
-    type = config.DEVICE_TYPE,
-    device_network_id = meta.device_network_id,
-	location = meta.location,
-	UDN = meta.UDN,
-    label = meta.label,
-    profile = config.DEVICE_PROFILE,
-    manufacturer = meta.mn,
-    model = meta.model,
-    vendor_provided_label = string.gsub(meta.UDN,"uuid:",""),
-	id = meta.id
-  }
-  --print ("client.new " .. inspect(metadata))
-  setmetatable(metadata, {__index = client})
-  return metadata
+	log.info('[lanclient:client.new]\t creating client label=' .. (meta.label or "nil") ..
+		' location=' .. (meta.location or "nil"))
+	-- device metadata table
+	local metadata = {}
+	for k,v in pairs(meta) do
+		metadata[k] = v
+	end
+	if not metadata.type then
+		metadata.type = config.DEVICE_TYPE
+		print("[lanclient:client.new]\t type attribute not set, defaulting to " .. config.DEVICE_TYPE)
+	end
+	if not metadata.profile then
+		metadata.profile = config.DEVICE_PROFILE
+		print("[lanclient:client.new]\t profile attribute not set, defaulting to " .. config.DEVICE_PROFILE)
+	end
+	setmetatable(metadata, {__index = client})
+	return metadata
 end
 function client:_call(method, ...)
-	local params = {...}
-	print("[lanclient:client:_call]\t DEBUG 1 method=" .. method .. " params=",utils.stringify_table(params))
+	local params = {...} or {}
+	print("[lanclient:client:_call]\t DEBUG 2 method=" .. method .. " params=",utils.stringify_table(params))
 	local url = self.location .. "/" .. method
-	--local query = params[1]["args"]
-	local ret,jsonresp = client:send_lan_command(url, params)
+	local ret,jsonresp = client:send_lan_command(url, params[1])
 	if not ret then
 		log.info("[lanclient:client:_call]\t Lan Command Failed", jsonresp)
 		return nil
@@ -42,14 +40,11 @@ function client:_call(method, ...)
 	return jsonresp or true
 end
 function client:command(command)
-	--print("[lanclient:client:command]\t DEBUG 2 device=",utils.stringify_table(device))
-	print("[lanclient:client:command]\t DEBUG 2 command[1]=" .. utils.stringify_table(command[1]) .. " command[2]=" .. utils.stringify_table(command[2]))
-	--return self:_call("command", device)
-	return self:_call(command[1], command[2])
+	print("[lanclient:client:command]\t DEBUG 1 command=" .. utils.stringify_table(command[1])," command.command=",command[1].command)
+	return self:_call(command[1].command, command[1].args)
 end
 -- Send LAN HTTP Request
 function client:send_lan_command(url, query)
-	print("[lanclient:client:send_lan_command]\t url=" .. url .. " query=" .. utils.stringify_table(query))
 	local dest_url = neturl.parse(url)
 	local res_body = {}
 	if query then
@@ -57,6 +52,7 @@ function client:send_lan_command(url, query)
 			dest_url.query[k] = v
 		end
 	end
+	print("[lanclient:client:send_lan_command]\t dest_url=" .. dest_url:build() .. " url=" .. url .. " query=" .. utils.stringify_table(query))
 	local _,code,_ = http.request{
 					url = dest_url:build(),
 					sink = ltn12.sink.table(res_body)

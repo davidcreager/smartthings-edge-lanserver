@@ -27,27 +27,37 @@ end
 -- <device_location>/<device_name>.xml
 -- from SSDP Response Location header
 local function fetch_device_info(url)
-  local response = {}
-  local _, status = http.request({
-    url=url,
-    sink=ltn12.sink.table(response)
-  })
-  if (status == 200) then
-	  local xmlres = xml_handler:new()
-	  local xml_parser = xml2lua.parser(xmlres)
-	  xml_parser:parse(table.concat(response))
-	  local meta = xmlres.root.root.device
-	  if not xmlres.root or not meta then
-		log.error('discover:fetch_device: Failed to fetch Metadata url=' .. (url or "nil"))
+	local response = {}
+	local _, status = http.request({
+					url=url,
+					sink=ltn12.sink.table(response)
+					})
+	if (status == 200) then
+		local xmlres = xml_handler:new()
+		local xml_parser = xml2lua.parser(xmlres)
+		xml_parser:parse(table.concat(response))
+		local fetchedMeta = xmlres.root.root.device
+		if not xmlres.root or not fetchedMeta then
+			log.error('discover:fetch_device: Failed to fetch Metadata url=' .. (url or "nil"))
+			return nil
+		end
+		print("[discovery][fetch_device_info]\t Fetched name=" .. fetchedMeta.friendlyName .. " modelName=" .. fetchedMeta.modelName .. " queryID=" .. fetchedMeta.queryID)
+		return {
+			type = config.DEVICE_TYPE,
+			device_network_id = fetchedMeta.queryID,
+			location = fetchedMeta.location,
+			UDN = fetchedMeta.UDN,
+			label = fetchedMeta.friendlyName,
+			profile = fetchedMeta.modelName,
+			manufacturer = fetchedMeta.manufacturer,
+			model = fetchedMeta.modelName,
+			vendor_provided_label = string.gsub(fetchedMeta.UDN,"uuid:",""),
+			id = fetchedMeta.id
+		}
+	else
+		log.error('discover:fetch_device: Failed to fetch Metadata url=' .. (url or "nil") .. " response code=" .. status)
 		return nil
-	  end
-	  --log.trace("DEBUG meta=" .. utils.stringify_table(meta))
-	  print("[discovery][fetch_device_info]\t Fetched name=" .. meta.friendlyName .. " modelName=" .. meta.modelName .. " queryID=" .. meta.queryID)
-	  return { name = meta.friendlyName, id = meta.id, location = meta.location,
-				device_network_id = meta.queryID,
-				UDN = meta.UDN, vendor = meta.UDN, mn = meta.manufacturer, model = meta.modelName }	  
-   end
-   return nil
+	end
 end
 local function find_device(devsFound, currentDevs, devToFind)
 -- executes udp search and returns a list of potential devices  
@@ -88,61 +98,30 @@ local function find_device(devsFound, currentDevs, devToFind)
 	upnp:close()
 	return parsed
 end
-local function make_device(fetchedMeta)
---make_device takes metadata from the device description (fetch_device_info) and makes it into something for the driver
-  --print("make_device: fetchedMeta=" .. inspect(fetchedMeta))
-  --local profiles = { rfxcom = "SmartBlind.v1", bluetoothConnect = "SmartDevice.v1", findIphone = "SmartBeep.v1"}
-  --local profile = profiles[fetchedMeta.model] or config.DEVICE_PROFILE
-	log.info('discover:make_device: called for name=' .. (fetchedMeta.name or "nil") .. 
-							' profile=' .. (fetchedMeta.model or "nil") ..
-							' device_network_id=' .. (fetchedMeta.device_network_id or "nil") )
-  local metadata = {
-    type = config.DEVICE_TYPE,
-    device_network_id = fetchedMeta.device_network_id,
-	location = fetchedMeta.location,
-	UDN = fetchedMeta.UDN,
-    label = fetchedMeta.name,
-    profile = fetchedMeta.model,
-    manufacturer = fetchedMeta.mn,
-    model = fetchedMeta.model,
-    vendor_provided_label = string.gsub(fetchedMeta.UDN,"uuid:",""),
-	id = fetchedMeta.id
-  }
-  return metadata
-end
 local disco = {}
 function disco.findDevice(device)
 -- findDevice finds a device by sending udp search(find_device), 
--- then fetching the device description (fetch_device_info), then making a device (make_device)
+-- then fetching the device description (fetch_device_info)
 	log.info("discover:disco.findDevice: About to try and find device "  .. (device.label or "nil") ..
 					" device_network_id=" .. (device.device_network_id or "nil")
 					)
-	local fetchedMeta
 	local advertisedDev = find_device(nil,nil,device.device_network_id)
 	if advertisedDev then
-		--log.info("discover:disco.findDevice: Advertised Device found name=" .. (advertisedDev.name or "nil") ..
-		--			" location=" .. (advertisedDev.location or "nil")
-		--			)
-		fetchedMeta = fetch_device_info(advertisedDev.location .. "/query")
-		if not fetchedMeta then
-			log.error("discover:disco.findDevice: fetchedMeta  NOT found label=" .. (advertisedDev.label or "nil") ..
+		local fetchedDevice = fetch_device_info(advertisedDev.location .. "/query")
+		if not fetchedDevice then
+			log.error("discover:disco.findDevice: fetchedDevice  NOT found label=" .. (advertisedDev.label or "nil") ..
 						" location=" .. (advertisedDev.location or "nil") ..
 						" device_network_id=" .. (advertisedDev.device_network_id or "nil")
 						)
 			return nil
-		else
-			--log.info("discover:disco.findDevice: fetchedMeta found name=" .. (fetchedMeta.name or "nil") ..
-			--			" location=" .. (fetchedMeta.location or "nil") ..
-			--			" device_network_id=" .. (fetchedMeta.device_network_id or "nil")
-			--			)
-		end		
+		end
+		return fetchedDevice		
 	else
 		log.error("discover:disco.findDevice: Advertised Device NOT found label=" .. (device.label or "nil") ..
 					" device_network_id=" .. (device.device_network_id or "nil")
 					)
 		return nil
 	end
-	return make_device(fetchedMeta)
 end
 function disco.start(driver, options, should_continue)
 	local known_devices = {}
@@ -166,21 +145,20 @@ function disco.start(driver, options, should_continue)
 	
 	local devList = {}
 	for _, potDev in pairs(advertisedDevs) do 
-		local devDescription = fetch_device_info(potDev.location .. "/query")
-		if  devDescription then
-			local dev = make_device(devDescription)
-			log.info("discover:disco.start: Device about to be made " .. (dev.label or "nil") ..
-						" location=" .. (dev.location or "nil") ..
-						" device_network_id=" .. (dev.device_network_id or "nil")
+		local fetchedDevice = fetch_device_info(potDev.location .. "/query")
+		if  fetchedDevice then
+			log.info("discover:disco.start: Device about to be made " .. (fetchedDevice.label or "nil") ..
+						" location=" .. (fetchedDevice.location or "nil") ..
+						" device_network_id=" .. (fetchedDevice.device_network_id or "nil")
 						)
 			if (driver) then
-				dev.client = lanclient.new(dev)
-				local newDevice = driver:try_create_device(dev)
-				--newDevice:set_field("client", dev)
-				log.debug("discover:disco.start: Device made for ",dev.client.label)
+				fetchedDevice.client = lanclient.new(fetchedDevice)
+				local newDevice = driver:try_create_device(fetchedDevice)
+				--newDevice:set_field("client", fetchedDevice)
+				log.debug("discover:disco.start: Device made for ",fetchedDevice.client.label)
 			else
-				log.debug("discover:disco.start: No driver for ",dev.label)
-				devList[dev.id] = dev
+				log.debug("discover:disco.start: No driver for ",fetchedDevice.label)
+				devList[fetchedDevice.id] = fetchedDevice
 			end
 		else
 			log.error("discover:disco.start: call to fetch_device_info failed label=" .. (potDev.label or "nil") ..
