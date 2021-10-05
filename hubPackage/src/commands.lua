@@ -12,25 +12,24 @@ local discovery = require('discovery')
 local command_handler = {}
 local function get_client(device)
 	local drvDevice = device
-	log.info("commands:get_client: label=" .. (drvDevice.label or "nil") .. " device_network_id=" .. (drvDevice.device_network_id or "nil") )
+	--log.info("[command_handler.get_client]\t label=" .. (drvDevice.label or "nil") .. " device_network_id=" .. (drvDevice.device_network_id or "nil") )
 	local client = drvDevice:get_field("client")
 	if not client then
 		local foundDevice = discovery.findDevice(drvDevice)
 		if foundDevice then
-			log.info("commands:get_client: created lanclient label=" .. (drvDevice.label or "nil") .. " device_network_id=" .. (drvDevice.device_network_id or "nil") )
 			client = lanclient.new(foundDevice)
 			drvDevice:set_field("client", client)
 			drvDevice:online()
-			log.info("commands:get_client: created lanclient label=" .. (drvDevice.label or "nil"), "Device online")
+			--log.info("[command_handler.get_client]\t created lanclient label=" .. (drvDevice.label or "nil"), "Device online")
 		else
-			log.error("commands:get_client: Couldn't create lanclient label=" .. (drvDevice.label or "nil") .. 
+			log.error("[command_handler.get_client]\t Couldn't create lanclient label=" .. (drvDevice.label or "nil") .. 
 				" device_network_id=" .. (drvDevice.device_network_id or "nil") )
 		end
 	end
 
 	if not client then
 		drvDevice:offline()
-		log.info("commands:get_client: Unable to reach client label=" .. (drvDevice.label or "nil") .. 
+		log.error("[command_handler.get_client]\t Unable to reach client label=" .. (drvDevice.label or "nil") .. 
 				" device_network_id=" .. (drvDevice.device_network_id or "nil") )
 
 		return nil, "unable to reach lanclient"
@@ -40,40 +39,38 @@ local function get_client(device)
 end
 function command_handler.command(driver, device, command)
 	--{"capability":"tone","positional_args":[],"command":"beep","component":"main","args":[]}
-	local cmd = command.command
-	local subcmd = nil
-	log.info("commands:command: command=" .. cmd .. " label=" .. (device.label or "nil") .. " device_network_id=" .. (device.device_network_id or "nil") )
-	print("debug command ", utils.stringify_table(command));
-	if cmd=="on" or cmd=="off" then
-		subcmd = {value=cmd}
-		cmd = "power"
-	end
-	local locClient = assert(get_client(device),"commands:command: Assert client not found")
-	log.info("commands:command: client="  .. " label=" .. (locClient.label or "nil") .. " location=" .. (locClient.location or "nil"))
+	print("[command_handler.command]\t DEBUG 0 command=" .. utils.stringify_table(command) .. " label=" .. (device.label or "nil") .. " device_network_id=" .. (device.device_network_id or "nil") )
+	local client = assert(get_client(device),"commands:command: Assert client not found")
 	local cmdFunc = {on = caps.switch.switch.on, off = caps.switch.switch.off}
-	local commandReturn
-	if cmd == "ping" then
-		commandReturn = locClient:command{cmd,{ip = driver.server.ip, port = driver.server.port}}
-	elseif subcmd ~= nil then
-		commandReturn = locClient:command{cmd,subcmd}
-	else
-		commandReturn = locClient:command{cmd}
+	local cmd = {command= command.command, args= command.args}
+	if command.command == "setColor" then
+		local red, green, blue = utils.hsl_to_rgb(command.args.color.hue, command.args.color.saturation)
+		cmd.args = {red= red, green= green, blue = blue}
 	end
+	--local commandReturn = client:command{cmd}
+	local commandReturn = client:command(cmd)
 	if commandReturn then
 		local resp,cont,err = json.decode(commandReturn)
+		print("[command_handler.command]\t DEBUG 1 lan returned decoded json=", utils.stringify_table(resp))
 		if resp then
-			local emitFunc = cmdFunc[resp["value"]]
-			print("command_handler:command: About to emit retCmd=", resp["cmd"], " retValue=", resp["value"])
+			local emitFunc = cmdFunc[resp["cmd"]]
 			if (emitFunc) then
 				device:emit_event(emitFunc())
-			elseif cmd ~= "ping" and cmd ~= "refresh" and cmd ~= "remove" then
-				log.info("commands:command: unrecognised command=" .. (cmd or "nil") .. " label=" .. 
+				--print("[command_handler.command]\t emitted retCmd=", resp["cmd"], " resp=" .. utils.stringify_table(resp))
+			elseif cmd.command == "setColor" then
+				--[[
+				local hue, sta = utils.rgb_to_hsl(calc_r, calc_g, calc_b)
+				device:emit_event(caps.colorControl.saturation(sta))
+				device:emit_event(caps.colorControl.hue(hue))
+				--]]
+			elseif cmd.command ~= "ping" and cmd.command ~= "refresh" and cmd.command ~= "remove" then
+				log.info("[command_handler.command]\t unrecognised command=" .. (cmd.command or "nil") .. " label=" .. 
 					(device.label or "nil") .. " device_network_id=" .. 
 					(device.device_network_id or "nil") )
 			end
 		end
 	else
-		log.info("commands:command: Failed command=" .. (cmd or "nil") .. " label=" .. 
+		log.info("[command_handler.command]\t Failed command=" .. (cmd.command or "nil") .. " label=" .. 
 			(device.label or "nil") .. " device_network_id=" .. 
 			(device.device_network_id or "nil") )
 	end

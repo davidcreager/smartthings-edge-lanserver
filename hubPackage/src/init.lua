@@ -15,6 +15,8 @@ local driver =
       lifecycle_handlers = lifecycles,
       supported_capabilities = {
         caps.switch,
+        caps.switchLevel,
+        caps.colorControl,
         caps.refresh,
 		caps.tone
       },
@@ -22,6 +24,12 @@ local driver =
         [caps.switch.ID] = {
           [caps.switch.commands.on.NAME] = commands.command,
           [caps.switch.commands.off.NAME] = commands.command
+        },
+        [caps.switchLevel.ID] = {
+          [caps.switchLevel.commands.setLevel.NAME] = commands.command
+        },
+        [caps.colorControl.ID] = {
+          [caps.colorControl.commands.setColor.NAME] = commands.command
         },
         [caps.refresh.ID] = {
           [caps.refresh.commands.refresh.NAME] = commands.command
@@ -36,7 +44,7 @@ local driver =
 ---------------------------------------
 -- Switch control for external commands
 function driver:command(device, command)
- log.debug("init:driver:command Received command via server id=" .. (device.id or "nil").. " command was " .. (command or "nil"))
+ log.debug("[init:driver:command]\t Received command via server id=" .. (device.id or "nil").. " command was " .. (command or "nil"))
 end
 
 -----------------------------
