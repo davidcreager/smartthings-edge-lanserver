@@ -10,7 +10,7 @@ const nodessdp = require('node-ssdp').Server;
 //const BTConnectServer = require("./BTConnectServer");
 const IP = require("ip");
 const { v4: uuidv4 } = require('uuid');
-const Device = require("./lanDevice.js")
+const Device = require("./lanDevice.js");
 let nCalls = 0;
 let cnt =0;
 const simpLog = function(typ,obj,newb) {
@@ -18,28 +18,7 @@ const simpLog = function(typ,obj,newb) {
 	//				" target=" + newb + " ssdpUSNPrefix=" + ssdpUSNPrefix + " ssdpUDN=" + ssdpUDN);
 }
 
-class ssdpDevice {
-	constructor({deviceType, friendlyName, UDN, location, id, modelDescription, queryID, modelName} = {}) {
-		this.deviceType = deviceType;
-		this.friendlyName = friendlyName;
-		this.UDN = UDN;
-		this.location = location;
-		this.id = id;
-		this.manufacturer = "DHC EA Consulting";
-		this.modelName = modelName;
-		this.modelNumber = "0001.0001";
-		this.modelDescription = modelDescription;
-		this.serialNumber = "0001001";
-		this.queryID = queryID;
-	}
-}	
-class ssdpDescription {
-	constructor(ssdpDevice) {
-		this.root = { $: {"xmlns": "urn:schemas-upnp-org:device-1-0" + " configId=" + "configuration number"} };
-		this.specVersion = {major:1,minor:0};
-		this.device = ssdpDevice;
-	}
-}
+
 class serverManager {
 	constructor(config) {
 		this.app = express();
@@ -147,7 +126,9 @@ class serverManager {
 							" Profile=" + device.modelName +
 							"\t" + device.uniqueName + " - " + device.friendlyName + "\t" + device.id);
 	}
-	command(req,res) {
+	async command(req,res) {
+		const ssdpDescription = require("./lanDevice.js").ssdpDescription;
+		const ssdpDevice = require("./lanDevice.js").ssdpDevice;
 		let dev;
 		Object.keys(this.devices).forEach( (key) => {
 			if (this.devices[key].queryID == req.params.device) dev = this.devices[key];
@@ -157,7 +138,7 @@ class serverManager {
 			res.status(500).send("invalid Device");
 			return null;
 		}
-		console.log("[serverManager][command]\t Command " + req.params.command + " for " + dev.uniqueName + " " + req.params.device + " Received" );
+		//console.log("[serverManager][command]\t Command " + req.params.command + " for " + dev.uniqueName + " " + req.params.device + " Received" );
 		if (req.params.command == "query") {
 			let ssdpdesc =  new ssdpDescription( 
 										new ssdpDevice( {friendlyName: dev.friendlyName,
@@ -175,25 +156,25 @@ class serverManager {
 			return null
 		}
 		if (req.params.command == "ping") {
-			console.log("[serverManager][command]\t Ping Received query=" + JSON.stringify(req.query));
+			//console.log("[serverManager][command]\t Ping Received query=" + JSON.stringify(req.query));
 			let serverIP = req.query.ip;
 			let serverPort = req.query.port;
 			//this.subscriptions[req.params.device] = {port: serverPort, ip: serverIP};
 			if (!this.subscriptions[dev.uniqueName]) this.subscriptions[dev.uniqueName] = []
 			this.subscriptions[dev.uniqueName].push({port: serverPort, ip: serverIP});
-			console.log("[serverManager][command]\t Subscription " + " for " + req.params.device + " " + serverIP + ":" + serverPort);
+			//console.log("[serverManager][command]\t Subscription " + " for " + req.params.device + " " + serverIP + ":" + serverPort);
 			res.status(200).json({response: "ping", cmd: "power", value:"off", level:0});
 			return null
 		}
 		if (req.params.command == "refresh") {
-			console.log("[serverManager][command]\t Refresh Received ");
+			//console.log("[serverManager][command]\t Refresh Received ");
 			res.status(200).json({response: "refresh", cmd: "power", value:"off", level:0});
 			return null
 		}
 		//const server = servers[dev.type]
 		const server = dev.server
 		if (!server.validCommands.includes(req.params.command)) {  
-			console.warn("[serverManager][command][error]\t Invalid Command "  + req.params.command + " for " + req.params.device);
+			console.warn("[serverManager][command][error]\t Invalid Command "  + req.params.command + " for " + req.params.device + " query=" + util.inspect(req.query));
 			res.status(500).send("invalid command");
 			return null;
 		}
