@@ -9,12 +9,12 @@ class BTConnectServer {
 		this.manager = manager;
 		this.validCommands = [];
 		this.serverType = "bluetoothConnect";
-		this.validCommands = ["on", "off", "setColor","temperature","level"];
+		this.validCommands = ["on", "off", "setColor","temperature","setLevel"];
 		this.managementCommands = [];
 		this.adapter = null;
 		this.cmdLookup = {
 			power:		[[0x43,0x40],[]],     		// 0x01 is on 0x02 off],
-			level:		[[0x43,0x42],[]],  			/// plus parsint(tostring(16)level, 16)  0-64
+			setLevel:		[[0x43,0x42],[]],  			/// plus parsint(tostring(16)level, 16)  0-64
 			setColor:	[[0x43,0x41],[0xFF,0x65]], 	//r,g,b in the middle  parseInt(tostring(16),16)
 			ct:			[0x43,0x43,0x00,0x00,0x00],
 			notify:		[0x43,0x67,0xde,0xad,0xbe,0xbf]
@@ -67,7 +67,7 @@ class BTConnectServer {
 		const bleCmd = [];
 		this.cmdLookup[cmd][0].forEach( (val,ind) => bleCmd.push(val) );
 		if (cmd=="power") bleCmd.push( ((subcmd=="off") ? 0x02 : 0x01) )
-		if (cmd=="level") bleCmd.push(parseInt(subcmd.toString(16),16));
+		if (cmd=="setLevel") bleCmd.push(parseInt(subcmd.toString(16),16));
 		//if (cmd=="setColor") colors[subcmd].forEach((val)=> bleCmd.push(parseInt(val.toString(16),16)))
 		if (cmd=="setColor") {
 			bleCmd.push(parseInt(subcmd.red.toString(16),16));
@@ -116,9 +116,9 @@ class BTConnectServer {
 		this.sendCommand(device, cmd, subcmd.value )
 	}
 
-	level( device, cmd, subcmd ) {
-		console.log("[BTConnectServer][level]\t level command received " + cmd + " subcmd=" + util.inspect(subcmd));
-		this.sendCommand(device, cmd, subcmd.value )
+	setLevel( device, cmd, subcmd ) {
+		console.log("[BTConnectServer][setLevel]\t setLevel command received " + cmd + " subcmd=" + util.inspect(subcmd));
+		this.sendCommand(device, cmd, subcmd.level )
 	}
 	temperature( device, cmd, subcmd ) {
 		console.log("[BTConnectServer][temperature]\t temperature command received " + cmd + " subcmd=" + util.inspect(subcmd));
