@@ -1,0 +1,96 @@
+{
+	"candela": {
+		"validCommands": [
+			{
+				"cmd": "setLevel",
+				"args": ["value"],
+				"state": "switchLevel"
+			},
+			{
+				"cmd": "on",
+				"args": [],
+				"state": "switch"
+			},
+			{
+				"cmd": "off",
+				"args": [],
+				"state": "switch"
+			}
+		]
+	},
+	"bedside": {
+		"validCommands": [
+			{
+				"cmd": "getName",
+				"args": [],
+				"state": "balls"
+			},
+			{
+				"cmd": "getState",
+				"args": [],
+				"state": "balls"
+			},
+			{
+				"cmd": "on",
+				"args": [],
+				"state": "switch"
+			},
+			{
+				"cmd": "off",
+				"args": [],
+				"state": "switch"
+			},
+			{
+				"cmd": "setColor",
+				"args": [
+					"red",
+					"green",
+					"blue"
+				],
+				"state": "colorControl"
+			},
+			{
+				"cmd": "setLevel",
+				"args": [
+					"value"
+				],
+				"min": 0,
+				"max": 64,
+				"state": "switchLevel"
+			}
+		]
+	},
+	"iphone": {
+		"validCommands": [
+			{
+				"cmd": "beep",
+				"args": [],
+				"state": "tone"
+			}
+		]
+	},
+	"rfxcom": {
+		"validCommands": [
+			{
+				"cmd": "up",
+				"args": [],
+				"state": "windowShutter"
+			},
+			{
+				"cmd": "down",
+				"args": [],
+				"state": "windowShutter"
+			},
+			{
+				"cmd": "stop",
+				"args": [],
+				"state": "windowShutter"
+			},
+			{
+				"cmd": "doCommand",
+				"args": [],
+				"state": "windowShutter"
+			}
+		]
+	}
+}

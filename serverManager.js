@@ -10,7 +10,7 @@ const nodessdp = require('node-ssdp').Server;
 //const BTConnectServer = require("./BTConnectServer");
 const IP = require("ip");
 const { v4: uuidv4 } = require('uuid');
-const Device = require("./lanDevice.js");
+const Device = require("./device.js");
 let nCalls = 0;
 let cnt =0;
 const simpLog = function(typ,obj,newb) {
@@ -24,7 +24,7 @@ class serverManager {
 		this.app = express();
 		this.config = config;
 		this.app.listen(config.serverPort, "0.0.0.0", () => {
-			console.log("[serverManager]\t\t\t " + "listening on port " + config.serverPort);
+			console.log("[serverManager]\t\t\t " + "listening on " + IP.address() + ":" + this.config.serverPort);
 		});
 		this.servers = {};
 		this.SSDPServers = {};
@@ -79,7 +79,7 @@ class serverManager {
 		const devList = Object.keys(this.devices).map( (dev) => {
 			return {uniqueName: this.devices[dev].uniqueName, 
 						queryID: this.devices[dev].queryID, 
-						validCommands: this.devices[dev].server.validCommands,
+						validCommands: dev.validCommands,
 						location: this.devices[dev].location,
 						friendlyName: this.devices[dev].friendlyName, type: this.devices[dev].type}
 			});
@@ -127,8 +127,6 @@ class serverManager {
 							"\t" + device.uniqueName + " - " + device.friendlyName + "\t" + device.id);
 	}
 	async command(req,res) {
-		const ssdpDescription = require("./lanDevice.js").ssdpDescription;
-		const ssdpDevice = require("./lanDevice.js").ssdpDevice;
 		let dev;
 		Object.keys(this.devices).forEach( (key) => {
 			if (this.devices[key].queryID == req.params.device) dev = this.devices[key];
@@ -140,18 +138,7 @@ class serverManager {
 		}
 		//console.log("[serverManager][command]\t Command " + req.params.command + " for " + dev.uniqueName + " " + req.params.device + " Received" );
 		if (req.params.command == "query") {
-			let ssdpdesc =  new ssdpDescription( 
-										new ssdpDevice( {friendlyName: dev.friendlyName,
-														UDN: "uuid:" + dev.id,
-														location: "http://"+ IP.address() + ":" + this.config.serverPort + "/" + dev.queryID,
-														id: dev.id, 
-														modelName: dev.modelName,
-														queryID: dev.queryID,
-														deviceType: dev.type,
-														modelDescription: dev.lanDeviceType}
-													)
-											)				
-			let xml = XMLBuilder.buildObject(ssdpdesc);
+			let xml = XMLBuilder.buildObject(dev.getSSDPDescription(IP.address(),this.config.serverPort));
 			res.status(200).send(xml);
 			return null
 		}
@@ -163,25 +150,27 @@ class serverManager {
 			if (!this.subscriptions[dev.uniqueName]) this.subscriptions[dev.uniqueName] = []
 			this.subscriptions[dev.uniqueName].push({port: serverPort, ip: serverIP});
 			//console.log("[serverManager][command]\t Subscription " + " for " + req.params.device + " " + serverIP + ":" + serverPort);
-			res.status(200).json({response: "ping", cmd: "power", value:"off", level:0});
+			res.status(200).json({response: "suceeded", cmd: "ping", query:req.query.value, state:dev.state});
 			return null
 		}
 		if (req.params.command == "refresh") {
 			//console.log("[serverManager][command]\t Refresh Received ");
-			res.status(200).json({response: "refresh", cmd: "power", value:"off", level:0});
+		//  res.status(200).json({response: "refresh", cmd: "power", value:"off", level:0});
+			res.status(200).json({response: "suceeded", cmd: "refresh", query:req.query.value, state:dev.state});
 			return null
 		}
 		//const server = servers[dev.type]
-		const server = dev.server
-		if (!server.validCommands.includes(req.params.command)) {  
+		if (!dev.validCommands.includes(req.params.command)) {  
 			console.warn("[serverManager][command][error]\t Invalid Command "  + req.params.command + " for " + req.params.device + " query=" + util.inspect(req.query));
+			//console.warn("[serverManager][command][error]\t DEBUG - " + util.inspect(dev))
 			res.status(500).send("invalid command");
 			return null;
 		}
-		console.log("[serverManager][command]\t Processing "  + req.params.command + " for " + req.params.device);
+		console.log("[serverManager][command]\t Processing "  + req.params.command + " for " + dev.friendlyName + " query is " + util.inspect(req.query));
 		
-		server[req.params.command](dev,req.params.command,req.query);
-		res.status(200).json({response:"suceeded", cmd: req.params.command, value:req.query.value});
+		//dev[req.params.command](dev,req.params.command,req.query);
+		const state = await dev[req.params.command](req.params.command,req.query);
+		res.status(200).json({response:"suceeded", cmd: req.params.command, query:req.query.value, state: state});
 		console.log("[serverManager][command]\t responded host=" + req.get("host") + 
 					" origin=" + req.get("origin") +
 					" remIP=" + req.socket.remoteAddress +

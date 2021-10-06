@@ -5,7 +5,7 @@
 							"rfxcomServer": false,
 							"findIphoneServer": true
 						},
-		"uuidFileName": "./uuid2.json",
+		"uuidFileName": "./uuid.json",
 		"serverPort": 13032,
 		"serverPath": "/command",
 		"serverQuery": "/query",
@@ -53,8 +53,32 @@
 					"lanDeviceType": "candela"
 				},
 				{
+					"uniqueName": "XMCTD_[F8:24:41:E9:0D:18]",
+					"friendlyName": "Davids Bedside",
+					"SERVICE_UUID": "8e2f0cbd-1a66-4b53-ace6-b494e25f87bd",
+					"CONTROL_UUID": "aa7d3f34-2d4f-41e0-807f-52fbf8cf7443",
+					"NOTIFY_UUID": "8f65073d-9f57-4aaa-afea-397d19d5bbeb",
+					"lanDeviceType": "bedside"
+				},
+				{
 					"uniqueName": "XMCTD_0D18[F8:24:41:E9:0D:18]",
-					"friendlyName": "Bedside 1",
+					"friendlyName": "Davids Bedside",
+					"SERVICE_UUID": "8e2f0cbd-1a66-4b53-ace6-b494e25f87bd",
+					"CONTROL_UUID": "aa7d3f34-2d4f-41e0-807f-52fbf8cf7443",
+					"NOTIFY_UUID": "8f65073d-9f57-4aaa-afea-397d19d5bbeb",
+					"lanDeviceType": "bedside"
+				},
+				{
+					"uniqueName": "XMCTD_[F8:24:41:E8:FF:44]",
+					"friendlyName": "Rosies Bedside",
+					"SERVICE_UUID": "8e2f0cbd-1a66-4b53-ace6-b494e25f87bd",
+					"CONTROL_UUID": "aa7d3f34-2d4f-41e0-807f-52fbf8cf7443",
+					"NOTIFY_UUID": "8f65073d-9f57-4aaa-afea-397d19d5bbeb",
+					"lanDeviceType": "bedside"
+				},
+				{
+					"uniqueName": "XMCTD_FF44[F8:24:41:E8:FF:44]",
+					"friendlyName": "Rosies Bedside",
 					"SERVICE_UUID": "8e2f0cbd-1a66-4b53-ace6-b494e25f87bd",
 					"CONTROL_UUID": "aa7d3f34-2d4f-41e0-807f-52fbf8cf7443",
 					"NOTIFY_UUID": "8f65073d-9f57-4aaa-afea-397d19d5bbeb",

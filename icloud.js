@@ -90,7 +90,7 @@ class iCloud {
 	onLogin(body, callback) {
 		if (body.hasOwnProperty("webservices") && body.webservices.hasOwnProperty("findme")) {
 			this.base_path = body.webservices.findme.url;
-			console.log("[icloud]\t\t\t Findme URL =" + this.base_path);
+			//console.log("[icloud]\t\t\t Findme URL =" + this.base_path);
 
 			var options = {
 				url: this.base_path + "/fmipservice/client/web/initClient",

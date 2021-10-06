@@ -11,7 +11,7 @@ if (process.argv.length > 2) {
 } else {
 	configFileName = "config.json"
 }
-console.log("[startServer]\t\t\t argv length=" + process.argv.length + " fname=" +configFileName )
+//console.log("[startServer]\t\t\t argv length=" + process.argv.length + " fname=" +configFileName )
 if (!configFileName.includes(".")) configFileName = configFileName + ".json"
 if (!configFileName.includes("/")) configFileName = "./" + configFileName
 console.log("[startServer]\t\t\t Loading Configuaration from " + configFileName)

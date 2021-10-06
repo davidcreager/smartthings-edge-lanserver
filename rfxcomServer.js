@@ -1,6 +1,6 @@
 'use strict';
 const rfxcom = require('rfxcom');
-const Device = require("./lanDevice.js")
+const Device = require("./device.js")
 class rfxcomServer {
 	constructor(manager) {
 		this.manager = manager;
@@ -37,19 +37,16 @@ class rfxcomServer {
 					console.log("[rfxcomserver][deviceDiscovered]\t remote found " + JSON.stringify(dev));
 					const uniqueName = dev.deviceId + "[" + dev.unitCode + "]";
 					const deviceInConfig = self.manager.getDeviceInConfig(uniqueName,self.serverType);
-					if ( !self.manager.devices[uniqueName] && deviceInConfig  ) {
-						let device = new Device({
+					if (deviceInConfig) {
+						let device = new Device.iphoneDevice({
 							uniqueName: uniqueName,
 							friendlyName: deviceInConfig.friendlyName,
 							type: self.serverType,
-							config: deviceInConfig,
-							lanDeviceType: deviceInConfig.lanDeviceType,
-							deviceID: dev.deviceId,
-							alias: null,
-							addressType: null,
-							mac: null,
-							bleDevice: null
-							});
+							lanDeviceType: deviceInConfig.lanDeviceType,	
+							config: deviceInConfig,			
+							server: self,
+							deviceID: dev.deviceId
+						});
 						this.manager.addDevice(device, this);
 					}					
 				});
