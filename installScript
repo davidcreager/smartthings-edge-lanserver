@@ -8,3 +8,4 @@ sudo usermod -a -G smartdev,dialout smartdev
 sudo chgrp -R smartdev /var/opt/node/smartthings-edge-lanserver/
 sudo systemctl start serverManager.service
 sudo systemctl enable serverManager.service
+sudo systemctl daemon-reload

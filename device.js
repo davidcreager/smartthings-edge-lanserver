@@ -1,8 +1,10 @@
 'use strict';
 const util =  require("util");
 const deviceCmds = require("./deviceCmds.json");
-class baseDevice {
+const EventEmitter = require('events');
+class baseDevice extends EventEmitter {
 	constructor(devProps) {
+		super();
 		this.uniqueName = devProps.uniqueName;
 		this.friendlyName = devProps.friendlyName;
 		this.type = devProps.type;
@@ -16,7 +18,7 @@ class baseDevice {
 			this.validCommands.push(command.cmd);
 			this.state[command.state] = ( (command.cmd == "on") || (command.cmd == "off") ) ? [command.cmd] : false;
 			this[command.cmd] = async (...args) => {
-				console.log("[baseClass][" + command.cmd + "]\t\t len of args=" + args.length + " args[0]=" + util.inspect(args[0]));
+				console.log("[baseClass][" + command.cmd + "]\t\t" + command.cmd + " for " + this.friendlyName + " len of args=" + args.length + " args[0]=" + util.inspect(args[0]));
 				//console.log("[baseClass][" + command.cmd + "]\t State before cmd = " + util.inspect(this.state));
 				let retState = await this.sendCommand( this.state , command.cmd, ...args );
 				//console.log("[baseClass][" + command.cmd + "]\t State after cmd = " + util.inspect(this.state) + " returned retState = " + util.inspect(retState));
@@ -31,6 +33,9 @@ class baseDevice {
 								rfxcom: "SmartBlind.v1",
 								};
 		return ( profileLookup[this.lanDeviceType] || "SmartDevice.v1" );
+	}
+	emitter_on(...args){
+		super.on(...args);
 	}
 	getSSDPDescription(ip,port) {
 		return {root: { $: {"xmlns": "urn:schemas-upnp-org:device-1-0" + " configId=" + "configuration number"}},
@@ -48,6 +53,21 @@ class baseDevice {
 							serialNumber: "0001001"
 						}
 				}
+	}
+	processStateUpdate(device, updatedState) {
+		let stateChanged = false;
+		Object.keys(this.state).forEach( (stateKey) => {
+			if ( updatedState[stateKey] ) {
+				if (this.state[stateKey] != updatedState[stateKey]){
+					this.state[stateKey] = updatedState[stateKey];
+					stateChanged = true;
+				}
+			}
+		})
+		if (stateChanged) {
+			this.emit("device updated", device, updatedState);
+			console.log("[baseClass][processStateUpdate] \tEmitting device update for " + device.friendlyName + " updatedState=" + util.inspect(updatedState));
+		}
 	}
 }
 class rfxDevice extends baseDevice {
@@ -125,17 +145,23 @@ class btConnectableDevice extends baseDevice {
 		}
 	}
 	receiveNotification(device,data) {
-		console.log("[btConnectableDevice][sendCommand]\t received valueChanged " + "\t" + util.inspect(data) + " type=" + typeof(data));
+		console.log("[bluetoothDevice][sendCommand]\t received valueChanged for " + device.friendlyName + "\t" + util.inspect(data) + " type=" + typeof(data));
 		let res = "N/A";
+		let workState = {};
+		let returnState = [];
 		switch (data[1]) {
 			case 0x45: // state result
-				if (data[2] == 0x01) res="on"
-				if (data[2] == 0x02) res="off"
-				if (data[3] == 0x01) res=res+";color mode" 
-				if (data[3] == 0x02) res=res+";white mode" 
-				if (data[3] == 0x03) res=res+";flow mode"
-				res = res + ";red:" + data[4] + ";green:" + data[5] + ";blue:" + data[6]
-				res = res + ";[7]:" + data[7] + ";[8]:" + data[8] + ";[9]:" + data[9]
+				if (data[2] == 0x01) res="on";
+				if (data[2] == 0x02) res="off";
+				if (data[3] == 0x01) res=res+";color mode";
+				if (data[3] == 0x02) res=res+";white mode";
+				if (data[3] == 0x03) res=res+";flow mode";
+				res = res + ";red:" + data[4] + ";green:" + data[5] + ";blue:" + data[6];
+				res = res + ";[7]:" + data[7] + ";[8]:" + data[8] + ";[9]:" + data[9];
+				workState.setColor = {red: data[4], green: data[5], blue: data[6]};
+				workState.setLevel = {level:data[8]};
+				if (data[2] == 0x01) workState.on = "on";
+				if (data[2] == 0x02) workState.off = "off";
 			break;
 			case 0x63: // pairing result
 				if (data[2] == 0x01) res = "Pair requested"
@@ -152,14 +178,28 @@ class btConnectableDevice extends baseDevice {
 			case 0x51: // set name
 			break;
 		}
-		console.log("[btConnectableDevice][sendCommand]\t received data result=" + res + " on/off bit=" + data[2] + " bright: " + data[8]);
-	}
+		const cmdDetails = deviceCmds[this.lanDeviceType].validCommands;
+		console.log("[bluetoothDevice][recNotify]\t received data result=" + res + " on/off bit=" + data[2] + " bright: " + data[8]);
+		if (!cmdDetails) {
+			console.log("[bluetoothDevice][recNotify]\t  cmdDetails not found, cannot update State");
+			return nil;
+		}
+		let retState = {}
+		cmdDetails.forEach( (cmd) => {
+			if (workState.cmd.cmd) {
+				retState[cmd.state] = workState[cmd.cmd];
+			}
+		});
+		console.log("[bluetoothDevice][recNotify]\t returning state updates" + util.inspect(retState));
+		this.processStateUpdate(device,retState)
+		return retState
+}
 	async sendCommand(retState, cmd, ...args) {
 		const bleCmd = [];
 		const cmdDetails = deviceCmds[this.lanDeviceType].validCommands.find( cm => cm.cmd == cmd );
 		let returnStateUpdate = false
 		if (!cmdDetails) {
-			console.log("[btConnectableDevice][sendCommand]\t WEIRD ERROR CmdDetails not found for " + cmd);
+			console.log("[bluetoothDevice][sendCommand]\t WEIRD ERROR CmdDetails not found for " + cmd);
 			return null;
 		}
 		retState[cmdDetails.state] = false;
@@ -183,10 +223,10 @@ class btConnectableDevice extends baseDevice {
 		const adapter = await this.server.getAdapter();
 		if ( (!this.bleDevice.isConnected) || !(await this.bleDevice.isConnected()) ){
 			try {
-				console.log("[btConnectableDevice][sendCommand]\t Connecting to " + this.mac );
+				console.log("[bluetoothDevice][sendCommand]\t Connecting to " + this.mac + " " + this.friendlyName );
 				this.bleDevice = await adapter.waitDevice(this.mac,20 * 10000);
 				//this.bleDevice = await adapter.waitDevice(self.mac);
-				console.log("[btConnectableDevice][sendCommand]\t Connected to " + self.mac );
+				console.log("[bluetoothDevice][sendCommand]\t Connected to " + self.mac + " " + self.friendlyName );
 				if (self.bleDevice) {
 					await self.bleDevice.connect();
 					self.bleDevice.gattServer = await self.bleDevice.gatt();
@@ -196,11 +236,11 @@ class btConnectableDevice extends baseDevice {
 					self.bleDevice.notifyCharacteristic.on("valuechanged", (data) => self.receiveNotification(self, data));
 					await self.bleDevice.notifyCharacteristic.startNotifications();
 				} else {
-					console.log("[btConnectableDevice][sendCommand]\t Cannot connect to Device" );
+					console.log("[bluetoothDevice][sendCommand]\t Cannot connect to Device " + self.friendlyName );
 					return retState;
 				}
 			} catch(er) {
-				console.log("[btConnectableDevice][sendCommand]\t Cannot reach Device " + er );
+				console.log("[bluetoothDevice][sendCommand]\t Cannot reach Device " + self.friendlyName + " " + er );
 				return retState;
 			}
 		}
@@ -209,14 +249,14 @@ class btConnectableDevice extends baseDevice {
 			await self.bleDevice.controlCharacteristic.writeValue(Buffer.from(self.bleMagic),{"type":"reliable"}); //command, request, reliable
 			await self.bleDevice.controlCharacteristic.writeValue(Buffer.from(bleCmd),{"type":"reliable"}); //command, request, reliable
 		} catch (er) {
-			console.log("[btConnectableDevice][sendCommand]\t Device writes failed " + er );
+			console.log("[bluetoothDevice][sendCommand]\t Device writes failed " + er );
 			return retState;
 		}
 		
 		// */
 		retState[cmdDetails.state] = returnStateUpdate;
 		//Object.keys(subcmd).forEach( (ar) => retState[ar] = subcmd[ar]);
-		//console.log("[btConnectableDevice][sendCommand]\t  returing State=" + util.inspect(retState));
+		//console.log("[bluetoothDevice][sendCommand]\t  returing State=" + util.inspect(retState));
 		return retState;
 	}
 }

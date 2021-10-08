@@ -33,6 +33,7 @@ fi
 
 cp -r * /var/opt/node/smartthings-edge-lanserver/
 chgrp -R smartdev /var/opt/node/smartthings-edge-lanserver/
+chown smartdev /var/opt/node/smartthings-edge-lanserver/*.json
 
 cp node-ble.conf /etc/dbus-1/system.d/
 cp serverManager.service /etc/systemd/system/

@@ -5,9 +5,7 @@ const util =  require("util");
 const xml2js = require("xml2js");
 const XMLBuilder = new xml2js.Builder();
 const nodessdp = require('node-ssdp').Server;
-//const findIphoneServer = require("./findIphoneServer");
-//const rfxcomServer = require("./rfxcomServer");
-//const BTConnectServer = require("./BTConnectServer");
+
 const IP = require("ip");
 const { v4: uuidv4 } = require('uuid');
 const Device = require("./device.js");
@@ -44,12 +42,12 @@ class serverManager {
 			if (err.code=="ENOENT") {
 				try {
 					fs.writeFileSync(this.config.uuidFileName, JSON.stringify( this.uuidStore ))
-					console.log("[lanserver]\t\t Initialised uuidStore " + this.config.uuidFileName);
+					console.log("[serverManager]\t\t Initialised uuidStore " + this.config.uuidFileName);
 				} catch (e) {
-					console.error("[lanserver]\t\t Initialising uuidStore error code=" + e.code + " error is " +  e);
+					console.error("[serverManager]\t\t Initialising uuidStore error code=" + e.code + " error is " +  e);
 				}
 			} else {
-				console.error("[lanserver]\t\t loading uuidStore error code=" + err.code + " error is " +  err)
+				console.error("[serverManager]\t\t loading uuidStore error code=" + err.code + " error is " +  err)
 			}
 		}
 		if (this.config.startServers) {
@@ -64,8 +62,11 @@ class serverManager {
 				}
 			})
 		}
+		this.app.get("/list/:object", (req, res) => {this.listObjects(req,res)});
+		//this.app.get("/devices", (req, res) => {this.listDevices(req,res)});
+		//this.app.get("/uuids", (req, res) => {this.listUUIDs(res)});
+		//this.app.get("/subscriptions", (req, res) => {this.listSubscriptions(res)});
 		this.app.get("/discovery", (req, res) => {this.discovery(res)});
-		this.app.get("/devices", (req, res) => {this.listDevices(req,res)});
 		this.app.get("/:device/:command", (req, res) => {this.command(req,res)});
 	}
 	discovery(req,res) {
@@ -75,16 +76,34 @@ class serverManager {
 		}
 		if (res) res.status(500).json({response:"discovey failed, no servers"});
 	}
-	listDevices(req,res) {
-		const devList = Object.keys(this.devices).map( (dev) => {
-			return {uniqueName: this.devices[dev].uniqueName, 
-						queryID: this.devices[dev].queryID, 
-						validCommands: dev.validCommands,
-						location: this.devices[dev].location,
-						friendlyName: this.devices[dev].friendlyName, type: this.devices[dev].type}
+	listObjects(req,res) {
+		//req.params.object
+		if ( (req.params.object == "devices") || (req.params.object == "subscriptions") || (req.params.object == "uuids") ) {
+			const obj = this[((req.params.object=="uuids") ? "uuidStore" : req.params.object)];
+			const retVal = Object.keys(obj).map( (obk) => {
+				switch (req.params.object) {
+					case "uuids":
+						return {uniqueName: obk, uuid: obj[obk]}
+						break;
+					case "devices":
+						return {uniqueName: obk, 				
+							queryID: obj[obk].queryID, 
+							validCommands: obj[obk].validCommands,
+							location: obj[obk].location,
+							friendlyName: obj[obk].friendlyName, type: obj[obk].type}
+						break;
+					case "subscriptions":
+						const subs = obj[obk].map( (sub) => sub.ip + ":" + sub.port );
+						return {uniqueName: obk, servers: subs}
+					break;
+				}
+				
 			});
-		//console.log(JSON.stringify(devList))
-		res.status(200).json(devList);
+			res.status(200).json(retVal);
+		} else {
+			console.log("[serverManager][listObjects] \tunknown object to list, should be 'devices' or 'subscriptions' or 'uuids'")
+			res.status(200).send("unknown object to list, should be 'devices' or 'subscriptions' or 'uuids'");
+		}	
 		return
 	}
 	getDeviceInConfig(uniqueName,type) {
@@ -92,8 +111,6 @@ class serverManager {
 		return deviceInConfig;		
 	}
 	addDevice(device, server){
-		//let USN = "uuid:" + device.id + ":" + this.config["ssdpConfig"].schema + "device:" + "smartdev:1";
-		//'ST: urn:SmartThingsCommunity:device:LightBulbESP8266:1'
 		if (!this.uuidStore[device.uniqueName]) {
 			this.uuidStore[device.uniqueName] = uuidv4();
 			try {
@@ -102,11 +119,19 @@ class serverManager {
 				console.error("[serverManager]\t\t Writing uuidStore error code=" + e.code + " error is " +  e);
 			}
 		}
-		//console.log("DEBUG " + util.inspect(device))
 		device.id = this.uuidStore[device.uniqueName];
 		device.queryID = "uuid:" + device.id + "::" + this.USNbase;
 		device.server = server;
 		device.location = "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID;
+		const self = this
+		device.emitter_on("device updated", (dev, updatedState) => {
+			if (self.subscriptions[dev.uniqueName]) {
+				self.subscriptions[dev.uniqueName].forEach( (sub) => {
+					console.log("[serverManager][on device updated]\t Sending subscription update for " + dev.friendlyName + " address=" + sub.ip + ":" + sub.port + " state=" + updatedState)
+				});
+			}
+			
+		});
 		const UDN = "uuid:" + device.id;
 		this.SSDPServers[device.uniqueName] = new nodessdp({
 								allowWildcards: true, 
@@ -122,9 +147,9 @@ class serverManager {
 		this.SSDPServers[device.uniqueName].addUSN(this.USNbase);
 		this.SSDPServers[device.uniqueName].start();
 		this.devices[device.uniqueName] = device;
-		console.log("[serverManager][addDevice]\t Created Device for " + device.type + "\t" + 
+		console.log("[serverManager][addDevice]\t Created Device for " + device.type + " " + 
 							" Profile=" + device.modelName +
-							"\t" + device.uniqueName + " - " + device.friendlyName + "\t" + device.id);
+							" " + device.uniqueName + " - " + device.friendlyName + " " + device.id);
 	}
 	async command(req,res) {
 		let dev;
@@ -148,8 +173,15 @@ class serverManager {
 			let serverPort = req.query.port;
 			//this.subscriptions[req.params.device] = {port: serverPort, ip: serverIP};
 			if (!this.subscriptions[dev.uniqueName]) this.subscriptions[dev.uniqueName] = []
-			this.subscriptions[dev.uniqueName].push({port: serverPort, ip: serverIP});
-			//console.log("[serverManager][command]\t Subscription " + " for " + req.params.device + " " + serverIP + ":" + serverPort);
+			let found = false;
+			this.subscriptions[dev.uniqueName].forEach( (sub) => {
+				if (sub.ip == serverIP) {
+					sub.port = serverPort
+					found = true;
+				}
+			})
+			if (!found) this.subscriptions[dev.uniqueName].push({port: serverPort, ip: serverIP});
+			if (!found) console.log("[serverManager][command]\t Subscription " + " for " + dev.friendlyName + " " + serverIP + ":" + serverPort);
 			res.status(200).json({response: "suceeded", cmd: "ping", query:req.query.value, state:dev.state});
 			return null
 		}

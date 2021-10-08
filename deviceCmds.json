@@ -4,6 +4,8 @@
 			{
 				"cmd": "setLevel",
 				"args": ["value"],
+				"min": 0,
+				"max": 64,
 				"state": "switchLevel"
 			},
 			{
