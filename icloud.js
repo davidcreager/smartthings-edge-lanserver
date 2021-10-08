@@ -78,7 +78,9 @@ class iCloud {
 		this.iRequest.post(options, function(error, response, body) {
 
 			if (!response || (response.statusCode != 200) ) {
-				return callback("[iCloud] Could not refresh session " + response?.statusCode);
+				if (!response) return callback("[iCloud] Could not refresh session ")
+				return callback("[iCloud] Could not refresh session " + response.statusCode);
+				// DHC node version for pi zero return callback("[iCloud] Could not refresh session " + response?.statusCode);
 			}
 
 			self.onLogin(JSON.parse(body), function(err, resp, body) {
