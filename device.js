@@ -117,6 +117,16 @@ class iphoneDevice extends baseDevice {
 		});
 	}
 }
+class mqttDevice extends baseDevice {
+		constructor(devProps) {
+			super(devProps);
+		}
+		async receiveMessage(topic,data) {
+		}
+		async sendMessage(topic,data) {
+		}
+
+}
 class btConnectableDevice extends baseDevice {
 	constructor(devProps) {
 		super(devProps);

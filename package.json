@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/davidcreager/smartthings-edge-lanserver#readme",
   "dependencies": {
+    "async-mqtt": "^2.6.1",
     "express": "^4.17.1",
     "got": "^11.8.2",
     "mdns-server": "^1.0.10",
