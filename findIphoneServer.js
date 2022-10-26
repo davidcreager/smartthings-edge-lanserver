@@ -27,6 +27,7 @@ class findIphoneServer {
 				devices.forEach( (dev) => {
 					const uniqueName = dev.name + "[" + dev.deviceDisplayName + "]";
 					const deviceInConfig = self.manager.getDeviceInConfig(uniqueName,self.serverType);
+					console.log("[findIphoneServer][discover]\t Found " + uniqueName);
 					if (deviceInConfig) {
 						let device = new Device.iphoneDevice({
 										uniqueName: uniqueName,
