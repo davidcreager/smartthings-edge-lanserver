@@ -28,7 +28,8 @@ client.on('response', function inResponse(headers, code, rinfo) {
 //client.search('urn:schemas-upnp-org:service:ContentDirectory:1')
 //client.search("urn:smartthings-com:device:thingsim:1")
 //urn:schemas-upnp-org:device:smartdev:1
-client.search("urn:schemas-upnp-org:device:smartdev:1")
+//client.search("urn:schemas-upnp-org:device:smartdev:1")
+client.search("urn:schemas-upnp-org:device:smartdev")
 // Or maybe if you want to scour for everything after 5 seconds
 setInterval(function() {
   //client.search('ssdp:all')
