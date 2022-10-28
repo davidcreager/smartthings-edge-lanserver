@@ -73,7 +73,8 @@ class BTConnectServer {
 			//console.log("[BTConnectServer][discover]\t Processing discovered device " + uniqueName + "\t" +dev[0] + "\t" + dev[1]);
 			const deviceInConfig = self.manager.getDeviceInConfig(uniqueName,self.serverType);
 			if (deviceInConfig) {
-				let device = new Device.btConnectableDevice({
+				const devType = (lanDeviceType == "govee") ? "goveeDevice" : "btConnectableDevice";
+				let device = new Device[devType]({
 								uniqueName: uniqueName,
 								friendlyName: deviceInConfig.friendlyName,
 								type: self.serverType,

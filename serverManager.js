@@ -122,7 +122,7 @@ class serverManager {
 		device.id = this.uuidStore[device.uniqueName];
 		device.queryID = "uuid:" + device.id + "::" + this.USNbase;
 		device.server = server;
-		device.location = "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID;
+		device.location = "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID + "/query";
 		const self = this
 		device.emitter_on("device updated", (dev, updatedState) => {
 			if (self.subscriptions[dev.uniqueName]) {
@@ -142,9 +142,10 @@ class serverManager {
 											"http.smartthings.com": "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID,
 											"UDN": UDN
 										},
-								location: "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID
+								location: "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID + "/query"
 							});
 		this.SSDPServers[device.uniqueName].addUSN(this.USNbase);
+		console.log("addUSN Called on " + this.USNbase);
 		this.SSDPServers[device.uniqueName].start();
 		this.devices[device.uniqueName] = device;
 		console.log("[serverManager][addDevice]\t Created Device for " + device.type + " " + 

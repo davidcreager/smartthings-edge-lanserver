@@ -127,6 +127,105 @@ class mqttDevice extends baseDevice {
 		}
 
 }
+class goveeDevice extends baseDevice {
+	//000102030405060708090a0b0c0d1910
+	//000102030405060708090a0b0c0d2b10
+	//It seems like those values are spat out by the bluetooth controller if you write this to the same handle as usual 0x0015:
+	//aa040000000000000000000000000000000000ae
+	//notify //  00010203-0405-0607-0809-0a0b0c0d2b10 or 00002a05-0000-1000-8000-00805f9b34fb
+	constructor(devProps) {
+		super(devProps);
+		this.mac = devProps.mac;
+		this.alias = devProps.alias;
+		this.deviceID = devProps.deviceID;
+		this.addressType = devProps.addressType;
+		this.bleDevice = devProps.bleDevice;
+		this.controlPacket = 0x33;
+		this.writeCharUUID = "000102030405060708090a0b0c0d2b11";
+		this.keepAlivePacket = "aa010000000000000000000000000000000000ab";
+	}
+	hexify(x) {return ( (x.toString(16).length < 2) ? '0' + x.toString(16) : x.toString(16) ) }
+	xorColor(r,g,b) {return (r^b^g)}
+	colorToHex(r,g,b) {return (hexify(r) + hexify(g) + hexify(b))}
+	hexToColor(s) = {return ( {r: Number("0x" + s.substring(0,2)), g: Number("0x" + s.substring(2,4)),r: Number("0x" + s.substring(4,6))} ) }
+	assembleMessage( cmd, value, red, green, blue, isWhite = false, whiteR=0, whiteG=0, whiteB=0) {
+		const cmdType = (cmd == "setPower") ? 0x01 : (cmd == "setLevel") ? 0x04 : (cmd == "setColor") ? 0x05 : 0x00;
+		const specWhite = (isWhite) ? 0x1 : 0x0;
+		const color = (isWhite) ? [0,0,0] : [red, green, blue];
+		const whiteColor = (isWhite) ? [red, green, blue] : [0,0,0]
+		const checksum = this.controlPacket ^ cmd ^ value ^ xorColor(...color) ^ specWhite ^ xorColor(...whiteColor);
+		const tmp	=	hexify(this.controlPacket) + hexify(cmd) + hexify(value) + colorToHex(...color) + hexify(specWhite) + colorToHex(...whiteColor) + "000000000000000000" + hexify(checksum)
+		return tmp;
+	}
+		async sendCommand(retState, cmd, ...args) {
+		const cmdDetails = deviceCmds[this.lanDeviceType].validCommands.find( cm => cm.cmd == cmd );
+		let returnStateUpdate = false
+		if (!cmdDetails) {
+			console.log("[bluetoothDevice][sendCommand]\t WEIRD ERROR CmdDetails not found for " + cmd);
+			return null;
+		}
+		retState[cmdDetails.state] = false;
+		let tCmd, value, red, green, blue
+		if (cmd=="setLevel") {
+			value = args[1].level;
+			tCmd = cmd;
+			if (cmdDetails.max) value = Math.floor( (level/100) * cmdDetails.max );
+			returnStateUpdate = args[1];
+		} else if (cmd == "on" || cmd == "off") {
+			tCmd = "setPower";
+			value = (cmd == "on") ? 1 : 0;
+			returnStateUpdate = cmd;
+		} else if (cmd=="setColor") {
+			tCmd = cmd;
+			value = 0x2;
+			red = parseInt(args[1].red);
+			green = parseInt(args[1].green);
+			blue = parseInt(args[1].blue);
+			returnStateUpdate = args[1];
+		} else {
+			returnStateUpdate = cmd;
+		}
+		const bleCmd = this.assembleMessage( tCmd, value, red, green, blue );
+		const self = this;
+		const adapter = await this.server.getAdapter();
+		if ( (!this.bleDevice.isConnected) || !(await this.bleDevice.isConnected()) ){
+			try {
+				console.log("[bluetoothDevice][sendCommand]\t Connecting to " + this.mac + " " + this.friendlyName );
+				this.bleDevice = await adapter.waitDevice(this.mac,20 * 10000);
+				//this.bleDevice = await adapter.waitDevice(self.mac);
+				console.log("[bluetoothDevice][sendCommand]\t Connected to " + self.mac + " " + self.friendlyName );
+				if (self.bleDevice) {
+					await self.bleDevice.connect();
+					self.bleDevice.gattServer = await self.bleDevice.gatt();
+					self.bleDevice.serviceRef = await self.bleDevice.gattServer.getPrimaryService(self.config.SERVICE_UUID);
+					self.bleDevice.controlCharacteristic = await self.bleDevice.serviceRef.getCharacteristic(self.config.CONTROL_UUID);
+					self.bleDevice.notifyCharacteristic = await self.bleDevice.serviceRef.getCharacteristic(self.config.NOTIFY_UUID);
+					self.bleDevice.notifyCharacteristic.on("valuechanged", (data) => self.receiveNotification(self, data));
+					await self.bleDevice.notifyCharacteristic.startNotifications();
+				} else {
+					console.log("[bluetoothDevice][sendCommand]\t Cannot connect to Device " + self.friendlyName );
+					return retState;
+				}
+			} catch(er) {
+				console.log("[bluetoothDevice][sendCommand]\t Cannot reach Device " + self.friendlyName + " " + er );
+				return retState;
+			}
+		}
+		
+		try {
+			await self.bleDevice.controlCharacteristic.writeValue(Buffer.from(bleCmd),{"type":"reliable"}); //command, request, reliable
+		} catch (er) {
+			console.log("[bluetoothDevice][sendCommand]\t Device writes failed " + er );
+			return retState;
+		}
+		
+		// */
+		retState[cmdDetails.state] = returnStateUpdate;
+		//Object.keys(subcmd).forEach( (ar) => retState[ar] = subcmd[ar]);
+		//console.log("[bluetoothDevice][sendCommand]\t  returing State=" + util.inspect(retState));
+		return retState;
+	}
+}
 class btConnectableDevice extends baseDevice {
 	constructor(devProps) {
 		super(devProps);

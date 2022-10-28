@@ -1,4 +1,36 @@
 {
+	"govee": {
+		"validCommands": [
+			{
+				"cmd": "on",
+				"args": [],
+				"state": "switch"
+			},
+			{
+				"cmd": "off",
+				"args": [],
+				"state": "switch"
+			},
+			{
+				"cmd": "setColor",
+				"args": [
+					"red",
+					"green",
+					"blue"
+				],
+				"state": "colorControl"
+			},
+			{
+				"cmd": "setLevel",
+				"args": [
+					"value"
+				],
+				"min": 0,
+				"max": 100,
+				"state": "switchLevel"
+			}
+		]
+	},
 	"candela": {
 		"validCommands": [
 			{

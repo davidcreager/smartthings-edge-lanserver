@@ -1,7 +1,7 @@
 {
 	"config": {
 		"startServers": {
-							"BTConnectServer": true,
+							"BTConnectServer": false,
 							"rfxcomServer": false,
 							"findIphoneServer": true
 						},
@@ -20,6 +20,14 @@
 			"NOTIFY_HANDLE": 22,
 			"DiscoveryTime": 5000,
 			"deviceMapping": [
+				{
+					"uniqueName": "ihoment_H6127_D6B7[A4:C1:38:00:D6:B7]",
+					"friendlyName": "Office Gove", 
+					"SERVICE_UUID": "00001801-0000-1000-8000-00805f9b34fb",
+					"CONTROL_UUID": "00010203-0405-0607-0809-0a0b0c0d2b11",
+					"NOTIFY_UUID": "00010203-0405-0607-0809-0a0b0c0d2b10",
+					"lanDeviceType": "govee"
+				},
 				{
 					"uniqueName": "yeelight_ms[F8:24:41:C0:50:C9]",
 					"friendlyName": "Candela 1",
