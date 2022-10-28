@@ -1,9 +1,17 @@
 const mdns = require("mdns-server");
 const fetch = require("node-fetch");
+const util =  require("util")
 const timeout = 4000;
 const browser = new mdns({reuseAddr: true, noInit: true, loopback: true});
+let FIRST = true;
+//FIRST = false;
 browser.on("response", (response) => {
-			console.log("[testDiscovery][response]" + " In response ")
+			console.log("[testDiscovery][response]" + " In response " + (response.answers?.data))
+			console.log(util.inspect(response.additionals, {depth:2}))
+			if (FIRST && response.additionals && response.additionals.length> 0) {
+				console.log(util.inspect(response, {depth:3}))
+				FIRST = false
+			}
 			response.additionals?.filter(additional => {return additional.type === "A";})
 			.map(async additional => {
 				console.log("[testDiscovery][response]" + " additional=" + JSON.stringify(additional));
@@ -21,7 +29,8 @@ browser.on("response", (response) => {
 browser.on("ready", function() {
 			browser.query({
 				questions: [
-					{name: "urn:smartthings-com:device:thingsim", type: "M"},
+					//{name: "urn:smartthings-com:device:thingsim", type: "M"},
+					{name: "urn:schemas-upnp-org:device:smartdev", type: "M"}
 					],
 			});
 		});
