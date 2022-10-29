@@ -5,8 +5,7 @@
   "main": "serverManager.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "bash install.sh",
-    "installer": "sudo bash install.sh"
+    "postinstall": "sudo bash install.sh"
   },
   "repository": {
     "type": "git",
@@ -24,7 +23,7 @@
     "got": "^11.8.2",
     "mdns-server": "^1.0.10",
     "nconf": "^0.11.3",
-    "node-ble": "^1.5.0",
+    "node-ble": "https://github.com/davidcreager/node-ble",
     "node-fetch": "^2.6.2",
     "node-ssdp": "^4.0.1",
     "prompt": "^1.2.0",

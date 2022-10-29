@@ -90,7 +90,9 @@ class serverManager {
 							queryID: obj[obk].queryID, 
 							validCommands: obj[obk].validCommands,
 							location: obj[obk].location,
-							friendlyName: obj[obk].friendlyName, type: obj[obk].type}
+							friendlyName: obj[obk].friendlyName, type: obj[obk].type,
+							deviceLocation: obj[obk].deviceLocation}
+					
 						break;
 					case "subscriptions":
 						const subs = obj[obk].map( (sub) => sub.ip + ":" + sub.port );

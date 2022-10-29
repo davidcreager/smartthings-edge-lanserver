@@ -3,7 +3,7 @@
 		"startServers": {
 							"BTConnectServer": true,
 							"rfxcomServer": false,
-							"findIphoneServer": false
+							"findIphoneServer": true
 						},
 		"uuidFileName": "./uuid.json",
 		"serverPort": 13032,
@@ -102,7 +102,7 @@
 			"encrypted": true,
 			"deviceMapping": [
 				{
-					"uniqueName": "iPhone[iPhone 12 Pro]",
+					"uniqueName": "David’s iPhone (3)[iPhone 12 Pro]",
 					"friendlyName": "David's iPhone",
 					"lanDeviceType": "iphone"
 				},

@@ -27,7 +27,7 @@ class findIphoneServer {
 				devices.forEach( (dev) => {
 					const uniqueName = dev.name + "[" + dev.deviceDisplayName + "]";
 					const deviceInConfig = self.manager.getDeviceInConfig(uniqueName,self.serverType);
-					console.log("[findIphoneServer][discover]\t Found " + uniqueName);
+					//console.log("[findIphoneServer][discover]\t Found " + uniqueName + " loc=" + JSON.stringify(dev.location));
 					if (deviceInConfig) {
 						let device = new Device.iphoneDevice({
 										uniqueName: uniqueName,
@@ -36,7 +36,8 @@ class findIphoneServer {
 										lanDeviceType: deviceInConfig.lanDeviceType,	
 										config: deviceInConfig,			
 										server: self,
-										deviceID: dev.id
+										deviceID: dev.id,
+										deviceLocation: dev.location
 									});
 						self.manager.addDevice(device, self);
 					} else {
