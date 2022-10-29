@@ -144,17 +144,44 @@ class goveeDevice extends baseDevice {
 		this.writeCharUUID = "000102030405060708090a0b0c0d2b11";
 		this.keepAlivePacket = "aa010000000000000000000000000000000000ab";
 	}
-	hexify(x) {return ( (x.toString(16).length < 2) ? '0' + x.toString(16) : x.toString(16) ) }
+	hexify(x) {return ( (Number(x).toString(16).length < 2) ? '0' + Number(x).toString(16) : Number(x).toString(16) ) }
 	xorColor(r,g,b) {return (r^b^g)}
-	colorToHex(r,g,b) {return (hexify(r) + hexify(g) + hexify(b))}
-	hexToColor(s) = {return ( {r: Number("0x" + s.substring(0,2)), g: Number("0x" + s.substring(2,4)),r: Number("0x" + s.substring(4,6))} ) }
+	//colorToHex(r,g,b) {return (this.hexify(r) + this.hexify(g) + this.hexify(b))}
+	colorToHex(r,g,b) {return ([this.hexify(r), this.hexify(g), this.hexify(b)])}
+	hexToColor(s)  {return ( {r: Number("0x" + s.substring(0,2)), g: Number("0x" + s.substring(2,4)),r: Number("0x" + s.substring(4,6))} ) }
 	assembleMessage( cmd, value, red, green, blue, isWhite = false, whiteR=0, whiteG=0, whiteB=0) {
-		const cmdType = (cmd == "setPower") ? 0x01 : (cmd == "setLevel") ? 0x04 : (cmd == "setColor") ? 0x05 : 0x00;
-		const specWhite = (isWhite) ? 0x1 : 0x0;
+		//value = on/off for setPower, level % for setLevel and "manual/music/diy/scene" for color
+		const commands = {"setPower": 0x01, "setLevel": 0x04, "setColor": 0x05};
+		if ( !commands[cmd] ) throw "Unknown Command " + cmd;
+		const colorModes = { "manual": 0x02, "music": 0x01, "scene": 0x04, "diy": 0x0a }
+		const tmpValue = (cmd == "setPower") ? (value == "on") ? 0x01 : 0x00 : (cmd == "setLevel") ? hexify( Math.round((value/100) * 254) ) : colorModes[value];
+		const scenes = {
+				"Sunrise": 0x00,
+				"Sunset": 0x01,
+				"Movie": 0x04,
+				"Dating": 0x05,
+				"Romantic": 0x07,
+				"Twinkle": 0x08,
+				"Candlelight": 0x09,
+				"Snowflake": 0x0f,
+				"Energetic": 0x10,
+				"Breathe": 0x0a,
+				"Crossing": 0x14,
+				"Rainbow": 0x15
+		}
 		const color = (isWhite) ? [0,0,0] : [red, green, blue];
 		const whiteColor = (isWhite) ? [red, green, blue] : [0,0,0]
-		const checksum = this.controlPacket ^ cmd ^ value ^ xorColor(...color) ^ specWhite ^ xorColor(...whiteColor);
-		const tmp	=	hexify(this.controlPacket) + hexify(cmd) + hexify(value) + colorToHex(...color) + hexify(specWhite) + colorToHex(...whiteColor) + "000000000000000000" + hexify(checksum)
+		const tmp = [	this.controlPacket,
+						commands[cmd],
+						tmpValue,
+						...this.colorToHex(...color),
+						(isWhite) ? 0x1 : 0x0,
+						...this.colorToHex(...whiteColor),
+						0,0,0,0,0,0,0,0,0
+						]
+		const checksum = tmp.reduce( (pv,cv) => (pv^cv), 0);
+		tmp[19] = checksum;
+		//console.log("[assembleMessage] checksum=" + checksum, util.inspect(tmp));
 		return tmp;
 	}
 		async sendCommand(retState, cmd, ...args) {
@@ -166,6 +193,7 @@ class goveeDevice extends baseDevice {
 		}
 		retState[cmdDetails.state] = false;
 		let tCmd, value, red, green, blue
+		red = 0;green = 0; blue = 0;
 		if (cmd=="setLevel") {
 			value = args[1].level;
 			tCmd = cmd;
@@ -174,6 +202,7 @@ class goveeDevice extends baseDevice {
 		} else if (cmd == "on" || cmd == "off") {
 			tCmd = "setPower";
 			value = (cmd == "on") ? 1 : 0;
+			value = cmd;
 			returnStateUpdate = cmd;
 		} else if (cmd=="setColor") {
 			tCmd = cmd;
@@ -194,14 +223,29 @@ class goveeDevice extends baseDevice {
 				this.bleDevice = await adapter.waitDevice(this.mac,20 * 10000);
 				//this.bleDevice = await adapter.waitDevice(self.mac);
 				console.log("[bluetoothDevice][sendCommand]\t Connected to " + self.mac + " " + self.friendlyName );
+				//uuid 00001801-0000-1000-8000-00805f9b34fb
+				//char 00002a05-0000-1000-8000-00805f9b34fb
+				//aa050100000000000000000000000000000000ae
 				if (self.bleDevice) {
 					await self.bleDevice.connect();
+					console.log("[bluetoothDevice][sendCommand]\t Connected to " + this.mac)
 					self.bleDevice.gattServer = await self.bleDevice.gatt();
+					console.log("[bluetoothDevice][sendCommand]\t Got gattServer ")
 					self.bleDevice.serviceRef = await self.bleDevice.gattServer.getPrimaryService(self.config.SERVICE_UUID);
+					console.log("[bluetoothDevice][sendCommand]\t Got service ref " + self.config.SERVICE_UUID);
+					self.bleDevice.otherServiceRef = await self.bleDevice.gattServer.getPrimaryService(self.config.OTHER_SERVICE);
+					console.log("[bluetoothDevice][sendCommand]\t Got other service ref " + self.config.OTHER_SERVICE);
 					self.bleDevice.controlCharacteristic = await self.bleDevice.serviceRef.getCharacteristic(self.config.CONTROL_UUID);
+					console.log("[bluetoothDevice][sendCommand]\t Got controlCharacteristic " + self.config.CONTROL_UUID);
+					self.bleDevice.statusCharacteristic = await self.bleDevice.otherServiceRef.getCharacteristic(self.config.STATUS_UUID);
+					console.log("[bluetoothDevice][sendCommand]\t Got statusCharacteristic " + self.config.STATUS_UUID);
 					self.bleDevice.notifyCharacteristic = await self.bleDevice.serviceRef.getCharacteristic(self.config.NOTIFY_UUID);
+					console.log("[bluetoothDevice][sendCommand]\t Got notifyCharacteristic " + self.config.NOTIFY_UUID)				
 					self.bleDevice.notifyCharacteristic.on("valuechanged", (data) => self.receiveNotification(self, data));
 					await self.bleDevice.notifyCharacteristic.startNotifications();
+					console.log("[bluetoothDevice][sendCommand]\t Started Notifications " + self.config.NOTIFY_UUID);
+					const tmpRead = await self.bleDevice.notifyCharacteristic.readValue();
+					console.log("[bluetoothDevice][sendCommand]\t Read notifyCharacteristic " + self.config.NOTIFY_UUID, util.inspect(tmpRead));
 				} else {
 					console.log("[bluetoothDevice][sendCommand]\t Cannot connect to Device " + self.friendlyName );
 					return retState;
@@ -213,7 +257,15 @@ class goveeDevice extends baseDevice {
 		}
 		
 		try {
-			await self.bleDevice.controlCharacteristic.writeValue(Buffer.from(bleCmd),{"type":"reliable"}); //command, request, reliable
+			const tmpBle = [0xaa, 0x05, 0x01, 0x00, 0x00,
+							0x00, 0x00, 0x00, 0x00, 0x00,
+							0x00, 0x00, 0x00, 0x00, 0x00,
+							0x00, 0x00, 0x00, 0x00,	0xae];
+			await self.bleDevice.controlCharacteristic.writeValue(Buffer.from(tmpBle)); //command, request, reliable
+			console.log("[bluetoothDevice][sendCommand]\t Wrote Status Req " );
+			const tmpRead2 = await self.bleDevice.statusCharacteristic.readValue();
+			console.log("[bluetoothDevice][sendCommand]\t Read Status Req ", util.inspect(tmpRead2));
+			await self.bleDevice.controlCharacteristic.writeValue(Buffer.from(bleCmd)); //command, request, reliable
 		} catch (er) {
 			console.log("[bluetoothDevice][sendCommand]\t Device writes failed " + er );
 			return retState;
@@ -374,3 +426,4 @@ module.exports = baseDevice;
 module.exports.rfxDevice = rfxDevice
 module.exports.iphoneDevice = iphoneDevice;
 module.exports.btConnectableDevice = btConnectableDevice;
+module.exports.goveeDevice = goveeDevice;
