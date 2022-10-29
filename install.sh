@@ -34,10 +34,10 @@ fi
 cp -r * /var/opt/node/smartthings-edge-lanserver/
 chgrp -R smartdev /var/opt/node/smartthings-edge-lanserver/
 chown smartdev /var/opt/node/smartthings-edge-lanserver/*.json
+chmod a+x *.js
 
 cp node-ble.conf /etc/dbus-1/system.d/
 cp serverManager.service /etc/systemd/system/
-
 
 systemctl daemon-reload
 ##systemctl enable serverManager.service
