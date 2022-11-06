@@ -49,7 +49,7 @@ class baseDevice extends EventEmitter {
 				modelDescription: this.lanDeviceType,
 				manufacturer: "DHC EA Consulting",
 				modelNumber: "0001.0001",
-				serialNumber: "0001001
+				serialNumber: "0001001"
 		}
 	}
 	getSSDPDescription(ip,port) {
