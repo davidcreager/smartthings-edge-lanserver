@@ -26,7 +26,8 @@ class serverManager {
 		});
 		this.servers = {};
 		this.SSDPServers = {};
-		this.USNbase = this.config["ssdpConfig"].schema + "device:" + "smartdev:1"
+		//this.USNbase = this.config["ssdpConfig"].schema + "device:" + "smartdev:1"
+		this.USNbase = this.config["ssdpConfig"].USN
 
 		//this.classMap = { BTConnectServer: BTConnectServer, rfxcomServer: rfxcomServer, findIphoneServer: findIphoneServer}
 		this.classMap = { BTConnectServer: require("./BTConnectServer"), 
@@ -124,7 +125,8 @@ class serverManager {
 		device.id = this.uuidStore[device.uniqueName];
 		device.queryID = "uuid:" + device.id + "::" + this.USNbase;
 		device.server = server;
-		device.location = "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID + "/query";
+		//device.location = "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID + "/query";
+		device.location = "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID;
 		const self = this
 		device.emitter_on("device updated", (dev, updatedState) => {
 			if (self.subscriptions[dev.uniqueName]) {
@@ -144,7 +146,8 @@ class serverManager {
 											"http.smartthings.com": "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID,
 											"UDN": UDN
 										},
-								location: "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID + "/query"
+								//location: "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID + "/query"
+								location: "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID
 							});
 		this.SSDPServers[device.uniqueName].addUSN(this.USNbase);
 		console.log("addUSN Called on " + this.USNbase);
@@ -168,6 +171,11 @@ class serverManager {
 		if (req.params.command == "query") {
 			let xml = XMLBuilder.buildObject(dev.getSSDPDescription(IP.address(),this.config.serverPort));
 			res.status(200).send(xml);
+			return null
+		}
+		if (req.params.command == "JSONQuery") {
+			let xml = XMLBuilder.buildObject(dev.getSSDPDescription(IP.address(),this.config.serverPort));
+			res.status(200).json(dev.getJSONDescription(IP.address(),this.config.serverPort));
 			return null
 		}
 		if (req.params.command == "ping") {

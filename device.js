@@ -37,6 +37,21 @@ class baseDevice extends EventEmitter {
 	emitter_on(...args){
 		super.on(...args);
 	}
+	getJSONDescription(ip, port) {
+		return {
+				friendlyName: this.friendlyName,
+				location: "http://" + ip + ":" + port + "/" + this.queryID,
+				UDN: "uuid:" + this.id,
+				id: this.id,
+				modelName: this.modelName,
+				queryID: this.queryID,
+				deviceType: this.type,
+				modelDescription: this.lanDeviceType,
+				manufacturer: "DHC EA Consulting",
+				modelNumber: "0001.0001",
+				serialNumber: "0001001
+		}
+	}
 	getSSDPDescription(ip,port) {
 		return {root: { $: {"xmlns": "urn:schemas-upnp-org:device-1-0" + " configId=" + "configuration number"}},
 					specVersion: {major:1,minor:0},

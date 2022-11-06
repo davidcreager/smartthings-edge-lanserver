@@ -1,12 +1,12 @@
 {
 	"config": {
 		"startServers": {
-			"BTConnectServer": true,
-			"rfxcomServer": false,
-			"findIphoneServer": true
-		},
-		"uuidFileName": "./uuid.json",
-		"serverPort": 13032,
+							"BTConnectServer": true,
+							"rfxcomServer": false,
+							"findIphoneServer": false
+						},
+		"uuidFileName": "./uuidtest.json",
+		"serverPort": 13033,
 		"serverPath": "/command",
 		"serverQuery": "/query",
 		"ssdpConfig": {
@@ -23,12 +23,12 @@
 			"deviceMapping": [
 				{
 					"uniqueName": "ihoment_H6127_D6B7[A4:C1:38:00:D6:B7]",
-					"friendlyName": "Office Gove",
+					"friendlyName": "Office Gove", 
 					"SERVICE_UUID": "00010203-0405-0607-0809-0a0b0c0d1910",
 					"OTHER_SERVICE": "00001801-0000-1000-8000-00805f9b34fb",
 					"CONTROL_UUID": "00010203-0405-0607-0809-0a0b0c0d2b11",
-					"NOTIFY_UUID": "00010203-0405-0607-0809-0a0b0c0d2b10",
-					"STATUS_UUID": "00002a05-0000-1000-8000-00805f9b34fb",
+					"NOTIFY_UUID": 	"00010203-0405-0607-0809-0a0b0c0d2b10",
+					"STATUS_UUID": 	"00002a05-0000-1000-8000-00805f9b34fb",
 					"lanDeviceType": "govee"
 				},
 				{
@@ -110,7 +110,7 @@
 				{
 					"uniqueName": "Rosie's Iphone[iPhone 11]",
 					"friendlyName": "Rosie''s iPhone",
-					"lanDeviceType": "iphone"
+					"lanDeviceType":  "iphone"
 				}
 			]
 		}
