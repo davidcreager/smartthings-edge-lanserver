@@ -28,9 +28,9 @@ if [ -d "/var/opt/node/smartthings-edge-lanserver/" ]; then
 	rm -r /var/opt/node/smartthings-edge-lanserver/
 else
 	echo "/var/opt/node/smartthings-edge-lanserver/ does not exist - Creating"
-	mkdir /var/opt/node/smartthings-edge-lanserver/
+	#mkdir /var/opt/node/smartthings-edge-lanserver/
 fi
-
+mkdir /var/opt/node/smartthings-edge-lanserver/
 cp -r * /var/opt/node/smartthings-edge-lanserver/
 chgrp -R smartdev /var/opt/node/smartthings-edge-lanserver/
 chown smartdev /var/opt/node/smartthings-edge-lanserver/*.json
