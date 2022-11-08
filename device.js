@@ -18,7 +18,7 @@ class baseDevice extends EventEmitter {
 			this.validCommands.push(command.cmd);
 			this.state[command.state] = ( (command.cmd == "on") || (command.cmd == "off") ) ? [command.cmd] : false;
 			this[command.cmd] = async (...args) => {
-				console.log("[baseClass][" + command.cmd + "]\t\t" + command.cmd + " for " + this.friendlyName + " len of args=" + args.length + " args[0]=" + util.inspect(args[0]));
+				console.log("[baseClass][" + command.cmd + "]\t\t" + command.cmd + " for " + this.friendlyName + " len of args=" + args.length + " args=" + util.inspect(args) + " args[0]=" + util.inspect(args[0]));
 				//console.log("[baseClass][" + command.cmd + "]\t State before cmd = " + util.inspect(this.state));
 				let retState = await this.sendCommand( this.state , command.cmd, ...args );
 				//console.log("[baseClass][" + command.cmd + "]\t State after cmd = " + util.inspect(this.state) + " returned retState = " + util.inspect(retState));
@@ -40,6 +40,7 @@ class baseDevice extends EventEmitter {
 	getJSONDescription(ip, port) {
 		return {
 				friendlyName: this.friendlyName,
+				uniqueName: this.uniqueName,
 				location: "http://" + ip + ":" + port + "/" + this.queryID,
 				UDN: "uuid:" + this.id,
 				id: this.id,
@@ -199,7 +200,7 @@ class goveeDevice extends baseDevice {
 		//console.log("[assembleMessage] checksum=" + checksum, util.inspect(tmp));
 		return tmp;
 	}
-		async sendCommand(retState, cmd, ...args) {
+	async sendCommand(retState, cmd, ...args) {
 		const cmdDetails = deviceCmds[this.lanDeviceType].validCommands.find( cm => cm.cmd == cmd );
 		let returnStateUpdate = false
 		if (!cmdDetails) {

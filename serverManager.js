@@ -68,6 +68,7 @@ class serverManager {
 		//this.app.get("/uuids", (req, res) => {this.listUUIDs(res)});
 		//this.app.get("/subscriptions", (req, res) => {this.listSubscriptions(res)});
 		this.app.get("/discovery", (req, res) => {this.discovery(res)});
+		this.app.get("/:device/smartthings_command/:component/:capability/:command", (req, res) => {this.smartthingsCommand(req,res)});
 		this.app.get("/:device/:command", (req, res) => {this.command(req,res)});
 	}
 	discovery(req,res) {
@@ -157,6 +158,31 @@ class serverManager {
 							" Profile=" + device.modelName +
 							" " + device.uniqueName + " - " + device.friendlyName + " " + device.id);
 	}
+	async smartthingsCommand(req,res) {
+		let dev;
+		Object.keys(this.devices).forEach( (key) => {
+			if (this.devices[key].queryID == req.params.device) dev = this.devices[key];
+		});
+		if (!dev) {
+			console.warn("[serverManager][smartthingsCommand][error]\t Invalid Device "  + req.params.command + " for " + req.params.device);
+			res.status(500).send("invalid Device");
+			return null;
+		}
+		//this.app.get("/:device/smartthings_command/:component/:capability/:command", (req, res) => {this.smartthingsCommand(req,res)});
+		//const state = await dev[req.query.command](req.query.command,req.query.args);
+		
+		console.log("[smartthingsCommand] received params ", util.inspect(req.query), util.inspect(req.params))
+		
+		if (!dev.validCommands.includes(req.params.command)) {  
+			console.warn("[serverManager][smartthingsCommand][error]\t Invalid Command "  + req.params.command + " for " + req.params.device + " query=" + util.inspect(req.query));
+			res.status(500).send("invalid command");
+			return null;
+		}
+		
+		const state = await dev[req.params.command](req.params.command,req.query);
+		res.status(200).json({response:"suceeded", cmd: req.query.command, query:req.query.args, state: state});
+		
+	}
 	async command(req,res) {
 		let dev;
 		Object.keys(this.devices).forEach( (key) => {
@@ -205,15 +231,17 @@ class serverManager {
 		//const server = servers[dev.type]
 		if (!dev.validCommands.includes(req.params.command)) {  
 			console.warn("[serverManager][command][error]\t Invalid Command "  + req.params.command + " for " + req.params.device + " query=" + util.inspect(req.query));
-			//console.warn("[serverManager][command][error]\t DEBUG - " + util.inspect(dev))
 			res.status(500).send("invalid command");
 			return null;
 		}
+
 		console.log("[serverManager][command]\t Processing "  + req.params.command + " for " + dev.friendlyName + " query is " + util.inspect(req.query));
 		
 		//dev[req.params.command](dev,req.params.command,req.query);
 		const state = await dev[req.params.command](req.params.command,req.query);
+		
 		res.status(200).json({response:"suceeded", cmd: req.params.command, query:req.query.value, state: state});
+		
 		console.log("[serverManager][command]\t responded host=" + req.get("host") + 
 					" origin=" + req.get("origin") +
 					" remIP=" + req.socket.remoteAddress +
