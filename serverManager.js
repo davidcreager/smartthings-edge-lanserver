@@ -11,11 +11,6 @@ const { v4: uuidv4 } = require('uuid');
 const Device = require("./device.js");
 let nCalls = 0;
 let cnt =0;
-const simpLog = function(typ,obj,newb) {
-	//console.log(" cnt=" + classCounter + " Constructing a " + typ + " class=" + obj.constructor.name + 
-	//				" target=" + newb + " ssdpUSNPrefix=" + ssdpUSNPrefix + " ssdpUDN=" + ssdpUDN);
-}
-
 
 class serverManager {
 	constructor(config) {
@@ -26,10 +21,7 @@ class serverManager {
 		});
 		this.servers = {};
 		this.SSDPServers = {};
-		//this.USNbase = this.config["ssdpConfig"].schema + "device:" + "smartdev:1"
-		this.USNbase = this.config["ssdpConfig"].USN
-
-		//this.classMap = { BTConnectServer: BTConnectServer, rfxcomServer: rfxcomServer, findIphoneServer: findIphoneServer}
+		this.USNbase = this.config["ssdpConfig"].USN //"urn:schemas-upnp-org:device:smartdev:1"
 		this.classMap = { BTConnectServer: require("./BTConnectServer"), 
 							rfxcomServer: require("./rfxcomServer"),
 							findIphoneServer: require("./findIphoneServer")
@@ -64,9 +56,6 @@ class serverManager {
 			})
 		}
 		this.app.get("/list/:object", (req, res) => {this.listObjects(req,res)});
-		//this.app.get("/devices", (req, res) => {this.listDevices(req,res)});
-		//this.app.get("/uuids", (req, res) => {this.listUUIDs(res)});
-		//this.app.get("/subscriptions", (req, res) => {this.listSubscriptions(res)});
 		this.app.get("/discovery", (req, res) => {this.discovery(res)});
 		this.app.get("/:device/smartthings_command/:component/:capability/:command", (req, res) => {this.smartthingsCommand(req,res)});
 		this.app.get("/:device/:command", (req, res) => {this.command(req,res)});
@@ -126,7 +115,6 @@ class serverManager {
 		device.id = this.uuidStore[device.uniqueName];
 		device.queryID = "uuid:" + device.id + "::" + this.USNbase;
 		device.server = server;
-		//device.location = "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID + "/query";
 		device.location = "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID;
 		const self = this
 		device.emitter_on("device updated", (dev, updatedState) => {
@@ -151,6 +139,7 @@ class serverManager {
 								location: "http://"+ IP.address() + ":" + this.config.serverPort + "/" + device.queryID
 							});
 		this.SSDPServers[device.uniqueName].addUSN(this.USNbase);
+		this.SSDPServers[device.uniqueName].addUSN(UDN);
 		console.log("addUSN Called on " + this.USNbase);
 		this.SSDPServers[device.uniqueName].start();
 		this.devices[device.uniqueName] = device;
@@ -193,7 +182,6 @@ class serverManager {
 			res.status(500).send("invalid Device");
 			return null;
 		}
-		//console.log("[serverManager][command]\t Command " + req.params.command + " for " + dev.uniqueName + " " + req.params.device + " Received" );
 		if (req.params.command == "query") {
 			let xml = XMLBuilder.buildObject(dev.getSSDPDescription(IP.address(),this.config.serverPort));
 			res.status(200).send(xml);
@@ -205,10 +193,8 @@ class serverManager {
 			return null
 		}
 		if (req.params.command == "ping") {
-			//console.log("[serverManager][command]\t Ping Received query=" + JSON.stringify(req.query));
 			let serverIP = req.query.ip;
 			let serverPort = req.query.port;
-			//this.subscriptions[req.params.device] = {port: serverPort, ip: serverIP};
 			if (!this.subscriptions[dev.uniqueName]) this.subscriptions[dev.uniqueName] = []
 			let found = false;
 			this.subscriptions[dev.uniqueName].forEach( (sub) => {
@@ -223,25 +209,17 @@ class serverManager {
 			return null
 		}
 		if (req.params.command == "refresh") {
-			//console.log("[serverManager][command]\t Refresh Received ");
-		//  res.status(200).json({response: "refresh", cmd: "power", value:"off", level:0});
 			res.status(200).json({response: "suceeded", cmd: "refresh", query:req.query.value, state:dev.state});
 			return null
 		}
-		//const server = servers[dev.type]
 		if (!dev.validCommands.includes(req.params.command)) {  
 			console.warn("[serverManager][command][error]\t Invalid Command "  + req.params.command + " for " + req.params.device + " query=" + util.inspect(req.query));
 			res.status(500).send("invalid command");
 			return null;
 		}
-
 		console.log("[serverManager][command]\t Processing "  + req.params.command + " for " + dev.friendlyName + " query is " + util.inspect(req.query));
-		
-		//dev[req.params.command](dev,req.params.command,req.query);
-		const state = await dev[req.params.command](req.params.command,req.query);
-		
+		const state = await dev[req.params.command](req.params.command, req.query);
 		res.status(200).json({response:"suceeded", cmd: req.params.command, query:req.query.value, state: state});
-		
 		console.log("[serverManager][command]\t responded host=" + req.get("host") + 
 					" origin=" + req.get("origin") +
 					" remIP=" + req.socket.remoteAddress +
@@ -251,5 +229,4 @@ class serverManager {
 		nCalls++;
 	}
 }
-
 module.exports = serverManager;
