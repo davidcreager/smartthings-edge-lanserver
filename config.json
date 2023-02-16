@@ -1,9 +1,9 @@
 {
 	"config": {
 		"startServers": {
-			"BTConnectServer": true,
-			"rfxcomServer": false,
-			"findIphoneServer": true
+			"BTConnectServer": false,
+			"rfxcomServer": true,
+			"findIphoneServer": false
 		},
 		"uuidFileName": "./uuid.json",
 		"serverPort": 13032,
@@ -20,32 +20,32 @@
 				{
 					"uniqueName": "Blind 0x000005/1[1]",
 					"friendlyName": "Blinds",
-					"lanDeviceType": "blind"
+					"lanDeviceType": "rfxcom"
 				},
 				{
 					"uniqueName": "Blind 0x000006/1[1]",
 					"friendlyName": "Left Awning",
-					"lanDeviceType": "blind"
+					"lanDeviceType": "rfxcom"
 				},
 				{
 					"uniqueName": "Blind 0x000006/2[2]",
 					"friendlyName": "Right Awning",
-					"lanDeviceType": "blind"
+					"lanDeviceType": "rfxcom"
 				},
 				{
 					"uniqueName": "Blind 0x000006/3[3]",
 					"friendlyName": "Left Awning Light",
-					"lanDeviceType": "blind"
+					"lanDeviceType": "rfxcom"
 				},
 				{
 					"uniqueName": "Blind 0x000006/4[4]",
 					"friendlyName": "Right Awning Light",
-					"lanDeviceType": "blind"
+					"lanDeviceType": "rfxcom"
 				},
 				{
 					"uniqueName": "Blind 0x000007/1[1]",
 					"friendlyName": "Lounge Blind",
-					"lanDeviceType": "blind"
+					"lanDeviceType": "rfxcom"
 				}
 			]
 		},

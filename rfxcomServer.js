@@ -6,7 +6,7 @@ class rfxcomServer {
 		this.manager = manager;
 		this.validCommands = [];
 		this.serverType = "rfxcom";
-		this.rfxtrx = new rfxcom.RfxCom(config[this.serverType].usbPort, {debug: false});
+		this.rfxtrx = new rfxcom.RfxCom(this.manager.config[this.serverType].usbPort, {debug: false});
 		this.rfy = new rfxcom.Rfy(this.rfxtrx, rfxcom.rfy.RFY);
 		this.validCommands = ["up", "down", "stop","doCommand"];
 		this.managementCommands = ["program", "erase", "eraseAll", "listRemotes"];
@@ -24,7 +24,8 @@ class rfxcomServer {
 		this.rfxtrx.on("receiverstarted", (msg) => {console.log("[rfxcomserver][receiverstarted]\t" +  " msg=" + msg)});
 		this.rfxtrx.on("end", (msg) => {console.log("[rfxcomserver][end]\t" +  " msg=" + msg)});
 		this.rfxtrx.on("drain", (msg) => {console.log("[rfxcomserver][drain]\t" +  " msg=" + msg)});
-		this.rfxtrx.on("receive", (msg) => {console.log("[rfxcomserver][receive]\t" +  " msg=" + msg)});
+		//this.rfxtrx.on("receive", (msg) => {console.log("[rfxcomserver][receive]\t" +  " msg=" + msg)});
+		this.rfxtrx.on("receive", (msg) => {});
 		this.rfxtrx.initialise(function () {
 			console.log("[rfxcomserver][constructor]\t Device initialised Listing remotes");
 			self.rfy.listRemotes();
@@ -41,22 +42,25 @@ class rfxcomServer {
 		if (typeof(msg) == "object") {
 			if (Array.isArray(msg)) {
 				msg.forEach( (dev) => {
-					const uniqueName = dev.deviceId + "[" + dev.unitCode + "]";
-					console.log("[rfxcomserver][deviceDiscovered]\t remote found " + devName + " " + JSON.stringify(dev));
-					const deviceInConfig = self.manager.getDeviceInConfig(uniqueName, self.serverType);
+					const uniqueName = "Blind " + dev.deviceId + "[" + dev.unitCode + "]";
+					console.log("[rfxcomserver][deviceDiscovered]\t remote found " + uniqueName + " " + JSON.stringify(dev));
+					const deviceInConfig = this.manager.getDeviceInConfig(uniqueName, this.serverType);
 					if (deviceInConfig) {
+						//console.log("[rfxcomserver][deviceDiscovered]\t uniqueName=" + uniqueName + " friendlyName=" + deviceInConfig.friendlyName );
 						let device = new Device.rfxDevice({
 							uniqueName: uniqueName,
 							friendlyName: deviceInConfig.friendlyName,
-							type: self.serverType,
+							type: this.serverType,
 							lanDeviceType: deviceInConfig.lanDeviceType,	
 							config: deviceInConfig,			
-							server: self,
+							server: this,
 							deviceID: dev.deviceId,
-							rfxInstance: self.rfy
+							rfxInstance: this.rfy
 						});
 						this.manager.addDevice(device, this);
-					}					
+					} else {
+						//console.log("[rfxcomserver][deviceDiscovered]\t remote not in config - uniqueName=" + uniqueName);
+					}						
 				});
 			} else {
 				console.error("[rfxcomserver][deviceDiscovered]\t msg not an array" +  " msg=" + JSON.stringify(msg));

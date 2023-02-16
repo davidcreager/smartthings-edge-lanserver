@@ -122,7 +122,9 @@ class rfxDevice extends baseDevice {
 		this.rfxInstance = devProps.rfxInstance;
 	}
 	async sendCommand( cmd, ...args) {
-		console.log("[rfxDevice][sendCommand]\t received " + " cmd=" + " len of args=" + args.length + " args[0]=" + util.inspect(args[0]));
+		console.log("[rfxDevice][sendCommand]\t received " + " cmd=" + cmd + " len of args=" + args.length + " args[0]=" + util.inspect(args[0]));
+		//console.log("[rfxDevice][sendCommand]\t trying this.rfxInstance[" + cmd + "](" + this.deviceID + ")" )
+		this.rfxInstance[cmd](this.deviceID);
 	}
 
 }
