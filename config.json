@@ -15,7 +15,39 @@
 			"USN": "urn:schemas-upnp-org:device:smartdev:1"
 		},
 		"rfxcom": {
-			"usbPort": "/dev/ttyUSB0"
+			"usbPort": "/dev/ttyUSB0",
+			"deviceMapping": [
+				{
+					"uniqueName": "Blind 0x000005/1[1]",
+					"friendlyName": "Blinds",
+					"lanDeviceType": "blind"
+				},
+				{
+					"uniqueName": "Blind 0x000006/1[1]",
+					"friendlyName": "Left Awning",
+					"lanDeviceType": "blind"
+				},
+				{
+					"uniqueName": "Blind 0x000006/2[2]",
+					"friendlyName": "Right Awning",
+					"lanDeviceType": "blind"
+				},
+				{
+					"uniqueName": "Blind 0x000006/3[3]",
+					"friendlyName": "Left Awning Light",
+					"lanDeviceType": "blind"
+				},
+				{
+					"uniqueName": "Blind 0x000006/4[4]",
+					"friendlyName": "Right Awning Light",
+					"lanDeviceType": "blind"
+				},
+				{
+					"uniqueName": "Blind 0x000007/1[1]",
+					"friendlyName": "Lounge Blind",
+					"lanDeviceType": "blind"
+				}
+			]
 		},
 		"bluetoothConnect": {
 			"NOTIFY_HANDLE": 22,

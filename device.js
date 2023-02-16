@@ -119,6 +119,7 @@ class baseDevice extends EventEmitter {
 class rfxDevice extends baseDevice {
 	constructor(devProps) {
 		super(devProps);
+		this.rfxInstance = devProps.rfxInstance;
 	}
 	async sendCommand( cmd, ...args) {
 		console.log("[rfxDevice][sendCommand]\t received " + " cmd=" + " len of args=" + args.length + " args[0]=" + util.inspect(args[0]));

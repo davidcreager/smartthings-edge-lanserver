@@ -30,22 +30,30 @@ class rfxcomServer {
 			self.rfy.listRemotes();
 		});
 	}
+	async discover() {
+		this.rfxtrx.initialise(function () {
+			console.log("Device initialised");
+			console.log("Rfxcom:Listing remotes")
+			that.rfy.listRemotes();
+		});
+	}
 	deviceDiscovered(msg) {
 		if (typeof(msg) == "object") {
 			if (Array.isArray(msg)) {
 				msg.forEach( (dev) => {
-					console.log("[rfxcomserver][deviceDiscovered]\t remote found " + JSON.stringify(dev));
 					const uniqueName = dev.deviceId + "[" + dev.unitCode + "]";
-					const deviceInConfig = self.manager.getDeviceInConfig(uniqueName,self.serverType);
+					console.log("[rfxcomserver][deviceDiscovered]\t remote found " + devName + " " + JSON.stringify(dev));
+					const deviceInConfig = self.manager.getDeviceInConfig(uniqueName, self.serverType);
 					if (deviceInConfig) {
-						let device = new Device.iphoneDevice({
+						let device = new Device.rfxDevice({
 							uniqueName: uniqueName,
 							friendlyName: deviceInConfig.friendlyName,
 							type: self.serverType,
 							lanDeviceType: deviceInConfig.lanDeviceType,	
 							config: deviceInConfig,			
 							server: self,
-							deviceID: dev.deviceId
+							deviceID: dev.deviceId,
+							rfxInstance: self.rfy
 						});
 						this.manager.addDevice(device, this);
 					}					
