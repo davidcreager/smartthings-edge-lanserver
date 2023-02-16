@@ -21,6 +21,8 @@
     "async-mqtt": "^2.6.1",
     "express": "^4.17.1",
     "got": "^11.8.2",
+    "mdns": "^2.7.2",
+    "mdns-js": "^1.0.3",
     "mdns-server": "^1.0.10",
     "nconf": "^0.11.3",
     "node-ble": "https://github.com/davidcreager/node-ble",

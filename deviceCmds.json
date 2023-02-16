@@ -4,12 +4,20 @@
 			{
 				"cmd": "on",
 				"args": [],
-				"state": "switch"
+				"state": "switch",
+				"capabilty": "switch",
+				"attributes": [
+					"switch"
+				]
 			},
 			{
 				"cmd": "off",
 				"args": [],
-				"state": "switch"
+				"state": "switch",
+				"capabilty": "switch",
+				"attributes": [
+					"switch"
+				]
 			},
 			{
 				"cmd": "setColor",
@@ -18,7 +26,13 @@
 					"green",
 					"blue"
 				],
-				"state": "colorControl"
+				"state": "colorControl",
+				"capabilty": "colorControl",
+				"attributes": [
+					"colorHSV",
+					"hue",
+					"saturation"
+				]
 			},
 			{
 				"cmd": "setLevel",
@@ -27,52 +41,33 @@
 				],
 				"min": 0,
 				"max": 100,
-				"state": "switchLevel"
+				"state": "switchLevel",
+				"capabilty": "switchLevel",
+				"attributes": [
+					"level"
+				]
 			}
 		]
 	},
 	"candela": {
 		"validCommands": [
 			{
-				"cmd": "setLevel",
-				"args": ["value"],
-				"min": 0,
-				"max": 64,
-				"state": "switchLevel"
-			},
-			{
 				"cmd": "on",
 				"args": [],
-				"state": "switch"
+				"state": "switch",
+				"capabilty": "switch",
+				"attributes": [
+					"switch"
+				]
 			},
 			{
 				"cmd": "off",
 				"args": [],
-				"state": "switch"
-			}
-		]
-	},
-	"bedside": {
-		"validCommands": [
-			{
-				"cmd": "getName",
-				"args": [],
-				"state": "balls"
-			},
-			{
-				"cmd": "getState",
-				"args": [],
-				"state": "balls"
-			},
-			{
-				"cmd": "on",
-				"args": [],
-				"state": "switch"
-			},
-			{
-				"cmd": "off",
-				"args": [],
-				"state": "switch"
+				"state": "switch",
+				"capabilty": "switch",
+				"attributes": [
+					"switch"
+				]
 			},
 			{
 				"cmd": "setColor",
@@ -81,7 +76,13 @@
 					"green",
 					"blue"
 				],
-				"state": "colorControl"
+				"state": "colorControl",
+				"capabilty": "colorControl",
+				"attributes": [
+					"colorHSV",
+					"hue",
+					"saturation"
+				]
 			},
 			{
 				"cmd": "setLevel",
@@ -90,7 +91,79 @@
 				],
 				"min": 0,
 				"max": 64,
-				"state": "switchLevel"
+				"state": "switchLevel",
+				"capabilty": "switchLevel",
+				"attributes": [
+					"level"
+				]
+			}
+		]
+	},
+	"bedside": {
+		"validCommands": [
+			{
+				"cmd": "on",
+				"args": [],
+				"state": "switch",
+				"capabilty": "switch",
+				"attributes": [
+					"switch"
+				]
+			},
+			{
+				"cmd": "off",
+				"args": [],
+				"state": "switch",
+				"capabilty": "switch",
+				"attributes": [
+					"switch"
+				]
+			},
+			{
+				"cmd": "setColor",
+				"args": [
+					"red",
+					"green",
+					"blue"
+				],
+				"state": "colorControl",
+				"capabilty": "colorControl",
+				"attributes": [
+					"colorHSV",
+					"hue",
+					"saturation"
+				]
+			},
+			{
+				"cmd": "setLevel",
+				"args": [
+					"value"
+				],
+				"min": 0,
+				"max": 64,
+				"state": "switchLevel",
+				"capabilty": "switchLevel",
+				"attributes": [
+					"level"
+				]
+			},
+			{
+				"cmd": "getName",
+				"args": [],
+				"state": "name",
+				"capability": "name",
+				"attributes": [
+					"name"
+				]
+			},
+			{
+				"cmd": "getState",
+				"args": [],
+				"state": "deviceState",
+				"capability": "deviceState",
+				"attributes": [
+					"deviceState"
+				]
 			}
 		]
 	},
@@ -99,7 +172,12 @@
 			{
 				"cmd": "beep",
 				"args": [],
-				"state": "tone"
+				"state": "tone",
+				"capabilty": "tone",
+				"attributes": [
+					"beep"
+				],
+				"command": "beep"
 			}
 		]
 	},
@@ -108,22 +186,42 @@
 			{
 				"cmd": "up",
 				"args": [],
-				"state": "windowShutter"
+				"state": "windowShutter",
+				"capabilty": "windowShutter",
+				"attributes": [
+					"openOrClosed"
+				],
+				"command": "open"
 			},
 			{
 				"cmd": "down",
 				"args": [],
-				"state": "windowShutter"
+				"state": "windowShutter",
+				"capabilty": "windowShutter",
+				"attributes": [
+					"openOrClosed"
+				],
+				"command": "close"
 			},
 			{
 				"cmd": "stop",
 				"args": [],
-				"state": "windowShutter"
+				"state": "windowShutter",
+				"capabilty": "windowShutter",
+				"attributes": [
+					"openOrClosed"
+				],
+				"command": "stop"
 			},
 			{
 				"cmd": "doCommand",
 				"args": [],
-				"state": "windowShutter"
+				"state": "windowShutter",
+				"capabilty": "windowShutter",
+				"attributes": [
+					"openOrClosed"
+				],
+				"command": "doCommand"
 			}
 		]
 	}
