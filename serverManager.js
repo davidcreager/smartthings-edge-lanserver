@@ -69,7 +69,11 @@ class serverManager {
 	}
 	listObjects(req,res) {
 		//req.params.object
-		if ( (req.params.object == "devices") || (req.params.object == "subscriptions") || (req.params.object == "uuids") ) {
+		const validObjects = [ "devices", "subscriptions", "uuids", "config" ]
+		if ( validObjects.includes(req.params.object) )
+			if (req.params.object=="config" ) {
+				res.status(200).json(this.config);
+			}
 			const obj = this[((req.params.object=="uuids") ? "uuidStore" : req.params.object)];
 			const retVal = Object.keys(obj).map( (obk) => {
 				switch (req.params.object) {
@@ -94,7 +98,7 @@ class serverManager {
 			});
 			res.status(200).json(retVal);
 		} else {
-			console.log("[serverManager][listObjects] \tunknown object to list, should be 'devices' or 'subscriptions' or 'uuids'")
+			console.log("[serverManager][listObjects] \tunknown object to list, should be 'devices' or 'subscriptions' or 'uuids' or 'config'")
 			res.status(200).send("unknown object to list, should be 'devices' or 'subscriptions' or 'uuids'");
 		}	
 		return

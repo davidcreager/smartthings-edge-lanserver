@@ -32,6 +32,13 @@ else
 fi
 mkdir /var/opt/node/smartthings-edge-lanserver/
 cp -r * /var/opt/node/smartthings-edge-lanserver/
+if [ -f "/var/opt/node/smartthings-edge-lanserver/uuid.json" ]; then
+	echo "/var/opt/node/smartthings-edge-lanserver/uuid.json"
+else
+	echo "/var/opt/node/smartthings-edge-lanserver/ does not exist - Creating"
+	touch /var/opt/node/smartthings-edge-lanserver/uuid.json
+fi
+
 chgrp -R smartdev /var/opt/node/smartthings-edge-lanserver/
 chown smartdev /var/opt/node/smartthings-edge-lanserver/*.json
 chmod a+x *.js
