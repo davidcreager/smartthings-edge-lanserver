@@ -70,7 +70,7 @@ class serverManager {
 	listObjects(req,res) {
 		//req.params.object
 		const validObjects = [ "devices", "subscriptions", "uuids", "config" ]
-		if ( validObjects.includes(req.params.object) )
+		if ( validObjects.includes(req.params.object) ) {
 			if (req.params.object=="config" ) {
 				res.status(200).json(this.config);
 			}
