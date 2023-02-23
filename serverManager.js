@@ -59,6 +59,7 @@ class serverManager {
 		this.app.get("/discovery", (req, res) => {this.discovery(res)});
 		this.app.get("/:device/smartthings_command/:component/:capability/:command", (req, res) => {this.smartthingsCommand(req,res)});
 		this.app.get("/:device/:command", (req, res) => {this.command(req,res)});
+		this.app.get("/:device", (req, res) => {this.ssdpResponse(req,res)});
 	}
 	discovery(req,res) {
 		if (this.servers) {
@@ -175,6 +176,20 @@ class serverManager {
 		const state = await dev[req.params.command](req.params.command,req.query);
 		res.status(200).json({response:"suceeded", cmd: req.query.command, query:req.query.args, state: state});
 		
+	}
+	async ssdpResponse(req,res) {
+		let dev;
+		Object.keys(this.devices).forEach( (key) => {
+			if (this.devices[key].queryID == req.params.device) dev = this.devices[key];
+		});
+		if (!dev) {
+			console.warn("[serverManager][ssdpResponse][error]\t Invalid Device "  + req.params.device);
+			res.status(500).send("invalid Device");
+			return null;
+		}
+		let xml = XMLBuilder.buildObject(dev.getSSDPDescription(IP.address(),this.config.serverPort));
+		res.status(200).send(xml);
+		return null
 	}
 	async command(req,res) {
 		let dev;
