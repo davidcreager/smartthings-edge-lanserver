@@ -94,7 +94,7 @@ class baseDevice extends EventEmitter {
 			if ( !state.hasOwnProperty("capability") || !state.hasOwnProperty("attribute") || !state.hasOwnProperty("newValue")  ||
 				typeof(state.capability) != "string" || typeof(state.attribute) != "string"
 				) {
-				console.log("[baseClass][processStateUpdate] invalid stateUpdate " + this.friendlyName + " updatedState=" + util.inspect(updatedState));
+				console.log("[baseClass][processStateUpdate] invalid stateUpdate " + this.friendlyName + " updatedState=" + util.inspect(this.state) + " inpState = " + util.inspect(state));
 				return;
 			}
 			if (!this.state[state.capability]) {
@@ -169,7 +169,7 @@ class iphoneDevice extends baseDevice {
 				console.log("[iphoneDevice][sendCommand]\t "+ errMsg);
 				return {result: false, msg: errMsg, state: self.state[cmdDetails.capability]};
 			}
-			processStateUpdate({capability: cmdDetails.capability, attribute: cmdDetails.attribute, newValue: "Triggered"})
+			this.processStateUpdate({capability: cmdDetails.capability, attribute: cmdDetails.attributes[0], newValue: {value: "Triggered"}});
 			return {result: true, msg: "Successful", state: self.state[cmdDetails.capability]};
 		});
 	}

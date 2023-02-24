@@ -5,7 +5,7 @@
 				"cmd": "on",
 				"args": [],
 				"state": "switch",
-				"capabilty": "switch",
+				"capability": "switch",
 				"attributes": [
 					"switch"
 				]
@@ -14,7 +14,7 @@
 				"cmd": "off",
 				"args": [],
 				"state": "switch",
-				"capabilty": "switch",
+				"capability": "switch",
 				"attributes": [
 					"switch"
 				]
@@ -27,7 +27,7 @@
 					"blue"
 				],
 				"state": "colorControl",
-				"capabilty": "colorControl",
+				"capability": "colorControl",
 				"attributes": [
 					"colorHSV",
 					"hue",
@@ -42,7 +42,7 @@
 				"min": 0,
 				"max": 100,
 				"state": "switchLevel",
-				"capabilty": "switchLevel",
+				"capability": "switchLevel",
 				"attributes": [
 					"level"
 				]
@@ -55,7 +55,7 @@
 				"cmd": "on",
 				"args": [],
 				"state": "switch",
-				"capabilty": "switch",
+				"capability": "switch",
 				"attributes": [
 					"switch"
 				]
@@ -64,7 +64,7 @@
 				"cmd": "off",
 				"args": [],
 				"state": "switch",
-				"capabilty": "switch",
+				"capability": "switch",
 				"attributes": [
 					"switch"
 				]
@@ -77,7 +77,7 @@
 					"blue"
 				],
 				"state": "colorControl",
-				"capabilty": "colorControl",
+				"capability": "colorControl",
 				"attributes": [
 					"colorHSV",
 					"hue",
@@ -92,7 +92,7 @@
 				"min": 0,
 				"max": 64,
 				"state": "switchLevel",
-				"capabilty": "switchLevel",
+				"capability": "switchLevel",
 				"attributes": [
 					"level"
 				]
@@ -105,7 +105,7 @@
 				"cmd": "on",
 				"args": [],
 				"state": "switch",
-				"capabilty": "switch",
+				"capability": "switch",
 				"attributes": [
 					"switch"
 				]
@@ -114,7 +114,7 @@
 				"cmd": "off",
 				"args": [],
 				"state": "switch",
-				"capabilty": "switch",
+				"capability": "switch",
 				"attributes": [
 					"switch"
 				]
@@ -127,7 +127,7 @@
 					"blue"
 				],
 				"state": "colorControl",
-				"capabilty": "colorControl",
+				"capability": "colorControl",
 				"attributes": [
 					"colorHSV",
 					"hue",
@@ -142,7 +142,7 @@
 				"min": 0,
 				"max": 64,
 				"state": "switchLevel",
-				"capabilty": "switchLevel",
+				"capability": "switchLevel",
 				"attributes": [
 					"level"
 				]
@@ -173,7 +173,7 @@
 				"cmd": "beep",
 				"args": [],
 				"state": "tone",
-				"capabilty": "tone",
+				"capability": "tone",
 				"attributes": [
 					"beep"
 				],
@@ -187,7 +187,7 @@
 				"cmd": "up",
 				"args": [],
 				"state": "windowShutter",
-				"capabilty": "windowShutter",
+				"capability": "windowShutter",
 				"attributes": [
 					"openOrClosed"
 				],
@@ -197,7 +197,7 @@
 				"cmd": "down",
 				"args": [],
 				"state": "windowShutter",
-				"capabilty": "windowShutter",
+				"capability": "windowShutter",
 				"attributes": [
 					"openOrClosed"
 				],
@@ -207,7 +207,7 @@
 				"cmd": "stop",
 				"args": [],
 				"state": "windowShutter",
-				"capabilty": "windowShutter",
+				"capability": "windowShutter",
 				"attributes": [
 					"openOrClosed"
 				],
@@ -217,7 +217,7 @@
 				"cmd": "doCommand",
 				"args": [],
 				"state": "windowShutter",
-				"capabilty": "windowShutter",
+				"capability": "windowShutter",
 				"attributes": [
 					"openOrClosed"
 				],
