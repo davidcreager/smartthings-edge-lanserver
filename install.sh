@@ -31,6 +31,13 @@ else
 	#mkdir /var/opt/node/smartthings-edge-lanserver/
 fi
 mkdir /var/opt/node/smartthings-edge-lanserver/
+if [ -d "/var/opt/node/smartthings-edge-lanserver/trust/" ]; then
+	echo "/var/opt/node/smartthings-edge-lanserver/ directory exists "
+	#rm -r /var/opt/node/smartthings-edge-lanserver/
+else
+	echo "/var/opt/node/smartthings-edge-lanserver/ does not exist - Creating"
+	mkdir /var/opt/node/smartthings-edge-lanserver/trust/
+fi
 cp -r * /var/opt/node/smartthings-edge-lanserver/
 if [ -f "/var/opt/node/smartthings-edge-lanserver/uuid.json" ]; then
 	echo "/var/opt/node/smartthings-edge-lanserver/uuid.json"
@@ -45,6 +52,7 @@ chmod a+x *.js
 
 cp node-ble.conf /etc/dbus-1/system.d/
 cp serverManager.service /etc/systemd/system/
+cp landevices-avahi.service /etc/avahi/services/
 
 systemctl daemon-reload
 ##systemctl enable serverManager.service
