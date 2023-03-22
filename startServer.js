@@ -3,17 +3,9 @@
 const util = require("util");
 const nconf = require("nconf");
 const ServerManager = require("./serverManager.js");
-
-
-let configFileName = null;
-if (process.argv.length > 2) {
-	configFileName = process.argv[2];
-} else {
-	configFileName = "config.json"
-}
-//console.log("[startServer]\t\t\t argv length=" + process.argv.length + " fname=" +configFileName )
+let configFileName = (process.argv.length > 2) ? process.argv[2] : "config.json";
 if (!configFileName.includes(".")) configFileName = configFileName + ".json"
 if (!configFileName.includes("/")) configFileName = "./" + configFileName
-console.log("[startServer]\t\t\t Loading Configuaration from " + configFileName)
+console.log("[startServer]\t\t\t Loading Configuration from " + configFileName)
 const config = nconf.file(configFileName).get().config;
 const serverManager = new ServerManager(config);

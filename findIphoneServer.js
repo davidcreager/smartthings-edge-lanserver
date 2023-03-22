@@ -13,12 +13,9 @@ class findIphoneServer {
 		this.manager = manager;
 		this.encrypter = new Encrypter("bollocks");
 		this.serverType = "findIphone";
-		let appleID = this.manager.config[this.serverType].apple_id;
-		let applePwd = this.manager.config[this.serverType].password;
-		if (this.manager.config[this.serverType].encrypted == true) {
-			appleID = this.encrypter.dencrypt(appleID);
-			applePwd = this.encrypter.dencrypt(applePwd);
-		}
+		const findIphoneConfig = this.manager.config[this.serverType]
+		const appleID = (findIphoneConfig.encrypted == true) ? encrypter.dencrypt(findIphoneConfig.apple_id) : findIphoneConfig.apple_id ;
+		const applePwd = (findIphoneConfig.encrypted == true) ? encrypter.dencrypt(findIphoneConfig.password) : findIphoneConfig.password ;
 		this.iCloud = null;
 		this.iCloud = new ICloud({
 				username: appleID,
