@@ -14,13 +14,13 @@ class findIphoneServer {
 		this.encrypter = new Encrypter("bollocks");
 		this.serverType = "findIphone";
 		const findIphoneConfig = this.manager.config[this.serverType]
-		const appleID = (findIphoneConfig.encrypted == true) ? encrypter.dencrypt(findIphoneConfig.apple_id) : findIphoneConfig.apple_id ;
-		const applePwd = (findIphoneConfig.encrypted == true) ? encrypter.dencrypt(findIphoneConfig.password) : findIphoneConfig.password ;
+		const appleID = (findIphoneConfig.encrypted == true) ? this.encrypter.dencrypt(findIphoneConfig.apple_id) : findIphoneConfig.apple_id ;
+		const applePwd = (findIphoneConfig.encrypted == true) ? this.encrypter.dencrypt(findIphoneConfig.password) : findIphoneConfig.password ;
 		this.iCloud = null;
 		this.iCloud = new ICloud({
 				username: appleID,
 				password: applePwd,
-				saveCredentials: true,
+				saveCredentials: false,
 				trustDevice: true,
 				//dataDirectory: path.resolve('./tmp/')
 				dataDirectory: path.resolve('./')
@@ -54,23 +54,28 @@ class findIphoneServer {
 		try {
 			const findMyService = this.iCloud.getService("findme");
 			await findMyService.refresh();
-			findMyService.devices.values().forEach( dv => console.log( "[findIphoneServer][discover]\t " + " device discovered " + dv.deviceInfo.name + "[" + dv.deviceInfo.rawDeviceModel + "]" ) );
-			findMyService.devices.values().filter( dv => (self.manager.getDeviceInConfig( dv.deviceInfo.name + "[" + dv.deviceInfo.rawDeviceModel + "]", self.serverType )) )
-											.map( dv => {
-												const uName = dv.deviceInfo.name + "[" + dv.deviceInfo.rawDeviceModel + "]";
-												const deviceInConfig = self.manager.getDeviceInConfig( uName, self.serverType );
-												return {
-													uniqueName: uName,
-													friendlyName: deviceInConfig.friendlyName,
-													type: self.serverType,
-													lanDeviceType: deviceInConfig.lanDeviceType,	
-													config: deviceInConfig,			
-													server: self,
-													deviceID: dv.deviceInfo.id,
-													deviceLocation: dv.deviceInfo.location
-												}
+			findMyService.devices.forEach( (dv, devkey) => {
+				console.log( "[findIphoneServer][discover]\t " + " device discovered " + dv.deviceInfo.name + "[" + dv.deviceInfo.rawDeviceModel + "]" );
+				const uName = dv.deviceInfo.name + "[" + dv.deviceInfo.rawDeviceModel + "]";
+				const deviceInConfig = self.manager.getDeviceInConfig( uName, self.serverType );
+				if ( deviceInConfig )  {
+					//console.log( "[findIphoneServer][discover]\t " + " device added " + dv.deviceInfo.name + "[" + dv.deviceInfo.rawDeviceModel + "]" );
+					self.manager.addDevice(
+											new Device.iphoneDevice({
+												uniqueName: uName,
+												friendlyName: deviceInConfig.friendlyName,
+												type: self.serverType,
+												lanDeviceType: deviceInConfig.lanDeviceType,	
+												config: deviceInConfig,			
+												server: self,
+												deviceID: dv.deviceInfo.id,
+												deviceLocation: dv.deviceInfo.location,
+												iCloud: self.iCloud
 											})
-											.forEach( dv => self.manager.addDevice(dv, self) );
+										, self)
+				}
+				
+			});
 		} catch (err) {
 			console.error('[findIphoneServer][discover]\t ERROR caught:',err)
 			//throw err;

@@ -18,22 +18,13 @@
   },
   "homepage": "https://github.com/davidcreager/smartthings-edge-lanserver#readme",
   "dependencies": {
-    "async-mqtt": "^2.6.3",
     "express": "^4.18.2",
-    "got": "^12.5.3",
-    "icloudjs": "^1.3.0",
+    "icloudjs": "github:davidcreager/icloud.js",
     "input": "^1.0.1",
     "nconf": "^0.12.0",
     "node-ble": "^1.9.0",
-    "node-fetch": "^3.3.0",
-    "node-gyp": "^9.3.1",
     "node-ssdp": "^4.0.1",
-    "prompt": "^1.3.0",
-    "request": "^2.88.2",
     "rfxcom": "github:davidcreager/node-rfxcom",
-    "serialport": "^10.5.0",
-    "tough-cookie": "^4.1.2",
-    "tough-cookie-file-store": "^2.0.3",
     "uuid": "^9.0.0",
     "xml2js": "^0.4.23"
   }

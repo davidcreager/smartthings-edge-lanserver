@@ -131,10 +131,11 @@ class rfxDevice extends baseDevice {
 class iphoneDevice extends baseDevice {
 	constructor(devProps) {
 		super(devProps);
+		this.iCloud = devProps.iCloud;
 	}
 	async sendCommand( cmd, ...args) {
 		console.log("[iphoneDevice][sendCommand]\t Alerting " + this.friendlyName + " deviceID=" + this.deviceID);
-		console.log("[iphoneDevice][sendCommand]\t received " + " cmd=" + " len of args=" + args.length + " args[0]=" + util.inspect(args[0]));
+		console.log("[iphoneDevice][sendCommand]\t received " + " cmd=" + " len of args=" + args.length + " args[0]=" + util.inspect(args[0]) + " args[1]=" + util.inspect(args[1]));
 		const cmdDetails = deviceCmds[this.lanDeviceType].validCommands.find( cm => cm.cmd == cmd );
 		if (!cmdDetails) {
 			const errMsg = "WEIRD ERROR CmdDetails not found for " + cmd;
@@ -142,36 +143,16 @@ class iphoneDevice extends baseDevice {
 			return {result: false, msg: errMsg, state: null};
 		}
 		const self = this;
-		let validSession =  this.server.iCloud.checkSession( (err, res, body) => {
-			if (err) {
-				console.log("[iphoneDevice][sendCommand]\t Session invalid " + err);
-				validSession = self.server.iCloud.login( (err,res,body) => {
-					if (err) {
-						console.error("[iphoneDevice][sendCommand]\t login Cannot login " + err);
-						return false;
-					}
-					console.log("[iphoneDevice][sendCommand]\t checkSession:login Logged in again");
-					return true;
-				})
-				return validSession
-			} else {
-				console.log("[iphoneDevice][sendCommand]\t checkSession: Reusing session");
-				return true;
-			}
-		});
-		if (!validSession) {
-			console.log("[iphoneDevice][sendCommand]\t validSession = " + validSession)
-			//return null
+		try {
+			const findMyService = this.iCloud.getService("findme");
+			await findMyService.alert( this.deviceID, args[1]?.subject || undefined);
+		} catch (er) {
+			let debugMsg = "[findIphoneServer][iphoneDevice][alert] Error caught " + er
+			console.error("[node_icloudjs]" + debugMsg);
+			return {result: false, msg: debugMsg, state: self.state[cmdDetails.capability]};
 		}
-		this.server.iCloud.alertDevice(this.deviceID, (err,resp,body) => {
-			if ( (err) || (resp.statusCode != 200) ) {
-				const errMsg = "Error sending beep " + self.friendlyName + " response error =" + err + " statuscode=" + resp.statusCode;
-				console.log("[iphoneDevice][sendCommand]\t "+ errMsg);
-				return {result: false, msg: errMsg, state: self.state[cmdDetails.capability]};
-			}
-			this.processStateUpdate({capability: cmdDetails.capability, attribute: cmdDetails.attributes[0], newValue: {value: "Triggered"}});
-			return {result: true, msg: "Successful", state: self.state[cmdDetails.capability]};
-		});
+		this.processStateUpdate({capability: cmdDetails.capability, attribute: cmdDetails.attributes[0], newValue: {value: "Triggered"}});
+		return {result: true, msg: "Successful", state: self.state[cmdDetails.capability]};
 	}
 }
 class mqttDevice extends baseDevice {

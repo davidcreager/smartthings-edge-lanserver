@@ -55,6 +55,7 @@ class serverManager {
 				}
 			})
 		}
+		this.app.get('/favicon.ico', (req, res) => res.status(204).end());
 		this.app.get("/list/:object", (req, res) => {this.listObjects(req,res)});
 		this.app.get("/discovery", (req, res) => {this.discovery(res)});
 		this.app.get("/:device/smartthings_command/:component/:capability/:command", (req, res) => {this.smartthingsCommand(req,res)});
